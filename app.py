@@ -21,7 +21,7 @@ class AppState:
             "DOAJ": 0,
             "Semantic Scholar": 0,
             "CORE API": 0,
-            "Sci-Hub (PyPaperBot)": 0,
+            "Sci-Hub": 0,
             "Selenium & LLM": 0
         }
 
@@ -125,7 +125,57 @@ with col1:
                 st.rerun()
                 
     with tab2:
-        st.info("Manual Entry coming soon.")
+        st.markdown("**Single Article Extraction**")
+        with st.form("manual_entry_form"):
+            doi_input = st.text_input("DOI (Required)")
+            article_name_input = st.text_input("Article Name (Required)")
+            format_name_input = st.text_input("Format Name (Output filename without .pdf) (Required)")
+            author_input = st.text_input("Author Name (Optional)")
+            pmcid_input = st.text_input("PMCID (Optional)")
+            arxiv_input = st.text_input("arXiv ID (Optional)")
+            bing_link_input = st.text_input("Bing Fallback Link (Optional)")
+            
+            manual_submit = st.form_submit_button("Extract Article", use_container_width=True)
+            
+            if manual_submit:
+                if not doi_input or not article_name_input or not format_name_input:
+                    st.error("Please fill in DOI, Article Name, and Format Name.")
+                elif not groq_key:
+                    st.error("Groq API Key is required.")
+                else:
+                    tmp_dir = tempfile.gettempdir()
+                    tmp_path = os.path.join(tmp_dir, "manual_entry.xlsx")
+                    df = pd.DataFrame([{
+                        "DOI": doi_input,
+                        "Article Name": article_name_input,
+                        "Format Name": format_name_input,
+                        "Author Name": author_input,
+                        "PMCID": pmcid_input,
+                        "arXiv ID": arxiv_input,
+                        "Bing Link": bing_link_input
+                    }])
+                    df.to_excel(tmp_path, index=False)
+                    
+                    state.is_scraping = True
+                    state.logs = []
+                    state.progress = 0.0
+                    state.stats = {k: 0 for k in state.stats}
+                    
+                    engine = ScraperEngine(
+                        excel_path=tmp_path, 
+                        log_callback=log_callback, 
+                        progress_callback=progress_callback, 
+                        stats_callback=stats_callback,
+                        max_workers=max_workers,
+                        groq_api_key=groq_key,
+                        unpaywall_email=unpaywall_email,
+                        ss_key=ss_key,
+                        core_api_key=core_key
+                    )
+                    state.engine = engine
+                    
+                    threading.Thread(target=engine.run, daemon=True).start()
+                    st.rerun()
 
 with col2:
     st.subheader("Real-Time Dashboard")
