@@ -245,7 +245,7 @@ Text to analyze (first 8000 chars):
                 break
             try:
                 # Streamlit Cloud FIX: uc=False (read-only filesystem blocks uc_driver binary patch), headless=True
-                driver = Driver(uc=False, headless=True, no_sandbox=True, disable_dev_shm_usage=True)
+                driver = Driver(uc=False, headless=True, no_sandbox=True)
                 self.driver_pool.put(driver)
                 self.log("log", f"Browser {i+1} initialized.")
             except Exception as e:
