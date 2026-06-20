@@ -244,7 +244,8 @@ Text to analyze (first 8000 chars):
             if not self.running:
                 break
             try:
-                driver = Driver(uc=True, headless=False)
+                # Streamlit Cloud FIX: uc=False (read-only filesystem blocks uc_driver binary patch), headless=True
+                driver = Driver(uc=False, headless=True, no_sandbox=True, disable_dev_shm_usage=True)
                 self.driver_pool.put(driver)
                 self.log("log", f"Browser {i+1} initialized.")
             except Exception as e:
@@ -388,7 +389,7 @@ Text to analyze (first 8000 chars):
             return
 
         try:
-            driver.uc_open_with_reconnect(doi, reconnect_time=3)
+            driver.get(doi)
             time.sleep(4)
             
             page_text = driver.get_page_source().lower()
@@ -515,7 +516,7 @@ Text to analyze (first 8000 chars):
         try:
             query = f"{article_name} {author_name}".strip()
             search_url = bing_link if bing_link and bing_link != 'nan' else f"https://www.bing.com/search?q={query}"
-            driver.uc_open_with_reconnect(search_url, reconnect_time=2)
+            driver.get(search_url)
             time.sleep(3)
             
             results = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")
