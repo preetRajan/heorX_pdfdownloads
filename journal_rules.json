@@ -1,0 +1,52 @@
+{
+    "default": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//button[contains(., 'Download PDF')]",
+        "timeout": 20
+    },
+    "sciencedirect.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn')]",
+        "timeout": 20
+    },
+    "nature.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "link.springer.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link')]",
+        "timeout": 20
+    },
+    "onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download')]",
+        "timeout": 20
+    },
+    "tandfonline.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "timeout": 20
+    },
+    "jamanetwork.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "nejm.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf']",
+        "timeout": 20
+    },
+    "thelancet.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@title, 'Download PDF')]",
+        "timeout": 20
+    },
+    "bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    }
+}
