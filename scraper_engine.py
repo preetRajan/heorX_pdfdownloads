@@ -319,25 +319,39 @@ Text to analyze (first 8000 chars):
         finally:
             self.driver_pool.put(driver)
 
-    def download_via_pypaperbot(self, doi, format_name):
+    def download_via_scihub(self, doi, format_name):
         if not doi or str(doi) == 'nan':
             return False
             
-        self.log("log", f"Attempting PyPaperBot for DOI: {doi}")
-        with tempfile.TemporaryDirectory() as temp_dir:
-            command = ["PyPaperBot", f"--doi={doi}", f"--dwn-dir={temp_dir}"]
+        self.log("log", f"Attempting Native Sci-Hub Extraction for DOI: {doi}")
+        mirrors = ["https://sci-hub.se", "https://sci-hub.st", "https://sci-hub.ru"]
+        
+        for mirror in mirrors:
             try:
-                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                for file in os.listdir(temp_dir):
-                    if file.endswith(".pdf"):
-                        src = os.path.join(temp_dir, file)
-                        dst = os.path.join(self.output_dir, f"{format_name}.pdf")
-                        shutil.move(src, dst)
-                        return True
-                return False
+                url = f"{mirror}/{doi}"
+                res = requests.get(url, headers=self.universal_downloader.headers, timeout=15)
+                if res.status_code == 200:
+                    import re
+                    # Sci-Hub usually puts the PDF link in an embed or iframe tag
+                    pdf_match = re.search(r'<embed[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
+                    if not pdf_match:
+                        pdf_match = re.search(r'<iframe[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
+                        
+                    if pdf_match:
+                        pdf_url = pdf_match.group(1)
+                        # Normalize protocol-relative or absolute-path URLs
+                        if pdf_url.startswith("//"):
+                            pdf_url = "https:" + pdf_url
+                        elif pdf_url.startswith("/"):
+                            pdf_url = mirror + pdf_url
+                            
+                        # Stream the PDF directly
+                        if self.universal_downloader._stream_pdf(pdf_url, format_name):
+                            return True
             except Exception as e:
-                self.log("error", f"PyPaperBot process failed: {str(e)}")
-                return False
+                pass
+                
+        return False
 
     def process_row(self, driver, row, duplicate_dois):
         doi = str(row['DOI']).strip()
@@ -358,10 +372,10 @@ Text to analyze (first 8000 chars):
             self.stats_callback(source)
             return
             
-        # Tier 6: PyPaperBot (Sci-Hub)
-        if self.download_via_pypaperbot(doi, format_name):
-            self.log("log", f"✅ Successfully downloaded '{format_name}' via Sci-Hub (PyPaperBot)")
-            self.stats_callback("Sci-Hub (PyPaperBot)")
+        # Tier 6: Native Sci-Hub
+        if self.download_via_scihub(doi, format_name):
+            self.log("log", f"✅ Successfully downloaded '{format_name}' via Sci-Hub")
+            self.stats_callback("Sci-Hub")
             return
 
         # Tier 7: Selenium / LLM
