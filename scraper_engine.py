@@ -225,12 +225,13 @@ Text to analyze (first 8000 chars):
         self.running = False
 
     def initialize_drivers(self):
-        self.log("log", f"Initializing {self.max_workers} Chromium browsers in background...")
+        self.log("log", f"Initializing {self.max_workers} Chromium browsers in background (Undetected Mode)...")
         for i in range(self.max_workers):
             if not self.running:
                 break
             try:
-                driver = Driver(uc=False, headless=True, no_sandbox=True)
+                # FIRST PRINCIPLE FIX: uc=True (Undetected Chromedriver) and headless2=True (New Headless Mode)
+                driver = Driver(uc=True, headless2=True, no_sandbox=True)
                 self.driver_pool.put(driver)
             except Exception as e:
                 self.log("error", f"Failed to init browser {i+1}: {e}")
@@ -512,7 +513,12 @@ Text to analyze (first 8000 chars):
                 return self._selenium_search_fallback(driver, article_name, author_name, bing_link, format_name)
 
             try:
-                driver.get(doi)
+                # FIRST PRINCIPLE FIX: Use uc_open_with_reconnect to invisibly bypass Turnstile
+                try:
+                    driver.uc_open_with_reconnect(doi, 4)
+                except Exception:
+                    driver.get(doi)
+                    
                 time.sleep(4)
                 page_text_raw = driver.get_page_source().lower()
                 
