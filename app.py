@@ -112,7 +112,11 @@ def render_truck_visualization():
         """
         
     html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+    
+    # CRITICAL FIX: Streamlit treats indented text as a code block. 
+    # We must strip newlines and excessive spaces before rendering.
+    clean_html = " ".join(html.split())
+    st.markdown(clean_html, unsafe_allow_html=True)
 
 
 st.title("Universal Literature Extractor")
