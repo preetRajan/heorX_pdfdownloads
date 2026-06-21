@@ -53,13 +53,19 @@ def flow_callback(flow_data):
         state.flow_status.append(flow_data)
 
 def render_truck_visualization():
-    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "Selenium & LLM"]
+    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "ZenRows Proxy", "Selenium & LLM"]
     total_loaded = sum([f.get('retrieved', 0) for f in state.flow_status])
     
     html = "<div style='display:flex; justify-content:space-between; align-items:flex-end; position:relative; padding-top:70px; padding-bottom: 30px; font-family:sans-serif; overflow-x:auto;'>"
     
     # Track line
     html += "<div style='position:absolute; bottom:40px; left:0; width:100%; height:4px; background:#ddd; z-index:1;'></div>"
+    
+    # Start Line
+    html += "<div style='position:absolute; bottom:25px; left:20px; width:4px; height:30px; background:#28a745; z-index:2; border-radius:2px;' title='Start'></div>"
+    
+    # Finish Line (Checkered pattern)
+    html += "<div style='position:absolute; bottom:25px; right:20px; width:12px; height:30px; background:repeating-conic-gradient(#333 0% 25%, #fff 0% 50%) 50% / 6px 6px; z-index:2; border: 1px solid #333;' title='Finish'></div>"
     
     for i, tier in enumerate(tiers):
         f = next((item for item in state.flow_status if item["tier"] == tier), None)
@@ -72,14 +78,19 @@ def render_truck_visualization():
                 status_color = "#FFA500"
                 loaded_text = "Loading..."
                 truck_html = f"""
-                <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20;'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.25));'>
+                    <svg width="45" height="45" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                      <path fill="#007bff" d="M2 20h34v26H2z"/>
+                      <path fill="#0056b3" d="M36 30h12l8 8v8H36z"/>
+                      <rect x="40" y="32" width="6" height="6" fill="#87ceeb"/>
+                      <circle cx="12" cy="48" r="6" fill="#333"/>
+                      <circle cx="28" cy="48" r="6" fill="#333"/>
+                      <circle cx="48" cy="48" r="6" fill="#333"/>
+                      <circle cx="12" cy="48" r="3" fill="#ccc"/>
+                      <circle cx="28" cy="48" r="3" fill="#ccc"/>
+                      <circle cx="48" cy="48" r="3" fill="#ccc"/>
                     </svg>
-                    <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#333; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; white-space:nowrap;'>
+                    <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#333; color:#fff; padding:3px 8px; border-radius:4px; font-size:12px; white-space:nowrap;'>
                         {total_loaded} PDFs
                     </div>
                 </div>
@@ -89,14 +100,19 @@ def render_truck_visualization():
                 loaded_text = f"+{f['retrieved']} Loaded"
                 if i == len(state.flow_status) - 1 and len(state.flow_status) == len(tiers):
                     truck_html = f"""
-                    <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20;'>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="1" y="3" width="15" height="13"></rect>
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.25));'>
+                        <svg width="45" height="45" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                          <path fill="#28a745" d="M2 20h34v26H2z"/>
+                          <path fill="#1e7e34" d="M36 30h12l8 8v8H36z"/>
+                          <rect x="40" y="32" width="6" height="6" fill="#87ceeb"/>
+                          <circle cx="12" cy="48" r="6" fill="#333"/>
+                          <circle cx="28" cy="48" r="6" fill="#333"/>
+                          <circle cx="48" cy="48" r="6" fill="#333"/>
+                          <circle cx="12" cy="48" r="3" fill="#ccc"/>
+                          <circle cx="28" cy="48" r="3" fill="#ccc"/>
+                          <circle cx="48" cy="48" r="3" fill="#ccc"/>
                         </svg>
-                        <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#28a745; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; white-space:nowrap;'>
+                        <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#28a745; color:#fff; padding:3px 8px; border-radius:4px; font-size:12px; white-space:nowrap;'>
                             {total_loaded} PDFs (Done)
                         </div>
                     </div>
@@ -128,6 +144,7 @@ with col1:
     
     with st.expander("API Keys & Settings", expanded=True):
         groq_key = st.text_input("Groq API Key (Required)", type="password", help="For LLM abstract detection")
+        zenrows_key = st.text_input("ZenRows API Key (Anti-Bot Bypass)", type="password", help="Will route through ZenRows to bypass Cloudflare/Akamai")
         core_key = st.text_input("CORE API Key", value="rdbipaBHZm02PjTOA8h6evxMyYsf47FD", type="password")
         ss_key = st.text_input("Semantic Scholar API Key", value="8D7qtvI8UC1xX5gQJnQj87NPBiPmzycV1NcIJ76w", type="password")
         unpaywall_email = st.text_input("Unpaywall Email", value="rajanjatt110@gmail.com")
@@ -213,7 +230,7 @@ with col1:
                         progress_callback=progress_callback, stats_callback=stats_callback,
                         flow_callback=flow_callback, max_workers=max_workers,
                         groq_api_key=groq_key, unpaywall_email=unpaywall_email,
-                        ss_key=ss_key, core_api_key=core_key
+                        ss_key=ss_key, core_api_key=core_key, zenrows_key=zenrows_key
                     )
                     state.engine = engine
                     threading.Thread(target=engine.run, daemon=True).start()
