@@ -53,7 +53,7 @@ def flow_callback(flow_data):
         state.flow_status.append(flow_data)
 
 def render_truck_visualization():
-    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "ZenRows Proxy", "Selenium & LLM"]
+    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "Scrape.do Proxy", "Selenium & LLM"]
     total_loaded = sum([f.get('retrieved', 0) for f in state.flow_status])
     
     html = "<div style='display:flex; justify-content:space-between; align-items:flex-end; position:relative; padding-top:70px; padding-bottom: 30px; font-family:sans-serif; overflow-x:auto;'>"
@@ -144,7 +144,7 @@ with col1:
     
     with st.expander("API Keys & Settings", expanded=True):
         groq_key = st.text_input("Groq API Key (Required)", type="password", help="For LLM abstract detection")
-        zenrows_key = st.text_input("ZenRows API Key (Anti-Bot Bypass)", type="password", help="Will route through ZenRows to bypass Cloudflare/Akamai")
+        scrape_do_key = st.text_input("Scrape.do API Key (Anti-Bot Bypass)", type="password", help="Will route through Scrape.do to bypass Cloudflare/Akamai")
         core_key = st.text_input("CORE API Key", value="rdbipaBHZm02PjTOA8h6evxMyYsf47FD", type="password")
         ss_key = st.text_input("Semantic Scholar API Key", value="8D7qtvI8UC1xX5gQJnQj87NPBiPmzycV1NcIJ76w", type="password")
         unpaywall_email = st.text_input("Unpaywall Email", value="rajanjatt110@gmail.com")
@@ -187,7 +187,7 @@ with col1:
                     progress_callback=progress_callback, stats_callback=stats_callback,
                     flow_callback=flow_callback, max_workers=max_workers,
                     groq_api_key=groq_key, unpaywall_email=unpaywall_email,
-                    ss_key=ss_key, core_api_key=core_key
+                    ss_key=ss_key, core_api_key=core_key, scrape_do_key=scrape_do_key
                 )
                 state.engine = engine
                 threading.Thread(target=engine.run, daemon=True).start()
@@ -230,7 +230,7 @@ with col1:
                         progress_callback=progress_callback, stats_callback=stats_callback,
                         flow_callback=flow_callback, max_workers=max_workers,
                         groq_api_key=groq_key, unpaywall_email=unpaywall_email,
-                        ss_key=ss_key, core_api_key=core_key, zenrows_key=zenrows_key
+                        ss_key=ss_key, core_api_key=core_key, scrape_do_key=scrape_do_key
                     )
                     state.engine = engine
                     threading.Thread(target=engine.run, daemon=True).start()
