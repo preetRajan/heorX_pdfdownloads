@@ -15,7 +15,7 @@ class AppState:
         self.progress = 0.0
         self.is_scraping = False
         self.engine = None
-        self.flow_status = [] # List of dicts: tier, input, retrieved, remaining, status
+        self.flow_status = []
         self.stats = {
             "Unpaywall": 0, "PubMed Central": 0, "arXiv": 0, "DOAJ": 0,
             "Semantic Scholar": 0, "CORE API": 0, "Sci-Hub": 0, "Selenium & LLM": 0
@@ -30,7 +30,8 @@ def log_callback(msg_type, msg):
     if msg_type == "done":
         state.is_scraping = False
     else:
-        state.logs.append(f"{time.strftime('%H:%M:%S')} - {msg}")
+        prefix = "[ERROR]" if msg_type == "error" else "[OK]" if "Downloaded:" in msg else "[INFO]"
+        state.logs.append(f"{time.strftime('%H:%M:%S')} {prefix} {msg}")
 
 def progress_callback(progress):
     state.progress = progress
@@ -50,6 +51,69 @@ def flow_callback(flow_data):
             break
     if not found:
         state.flow_status.append(flow_data)
+
+def render_truck_visualization():
+    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "Selenium & LLM"]
+    total_loaded = sum([f.get('retrieved', 0) for f in state.flow_status])
+    
+    html = "<div style='display:flex; justify-content:space-between; align-items:flex-end; position:relative; padding-top:70px; padding-bottom: 30px; font-family:sans-serif; overflow-x:auto;'>"
+    
+    # Track line
+    html += "<div style='position:absolute; bottom:40px; left:0; width:100%; height:4px; background:#ddd; z-index:1;'></div>"
+    
+    for i, tier in enumerate(tiers):
+        f = next((item for item in state.flow_status if item["tier"] == tier), None)
+        status_color = "#ccc"
+        loaded_text = "Waiting"
+        truck_html = ""
+        
+        if f:
+            if f["status"] == "Processing...":
+                status_color = "#FFA500"
+                loaded_text = "Loading..."
+                truck_html = f"""
+                <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20;'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                    <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#333; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; white-space:nowrap;'>
+                        {total_loaded} PDFs
+                    </div>
+                </div>
+                """
+            elif f["status"] == "Completed":
+                status_color = "#28a745"
+                loaded_text = f"+{f['retrieved']} Loaded"
+                if i == len(state.flow_status) - 1 and len(state.flow_status) == len(tiers):
+                    truck_html = f"""
+                    <div style='position:absolute; bottom: 45px; left:50%; transform:translateX(-50%); z-index:20;'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+                        <div style='position:absolute; top:-25px; left:50%; transform:translateX(-50%); font-weight:bold; background:#28a745; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; white-space:nowrap;'>
+                            {total_loaded} PDFs (Done)
+                        </div>
+                    </div>
+                    """
+        
+        html += f"""
+        <div style='text-align:center; flex:1; position:relative; z-index:10;'>
+            {truck_html}
+            <div style='height:16px; width:16px; background-color:{status_color}; border-radius:50%; margin:0 auto; border:3px solid #fff; box-shadow:0 0 0 2px {status_color};'></div>
+            <div style='font-size:11px; margin-top:15px; font-weight:bold; color:#333; word-wrap:break-word; max-width:80%; margin-left:auto; margin-right:auto;'>{tier}</div>
+            <div style='font-size:10px; color:#666; margin-top:2px;'>{loaded_text}</div>
+        </div>
+        """
+        
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
 
 st.title("Universal Literature Extractor")
 
@@ -165,15 +229,7 @@ with col2:
     if not state.flow_status:
         st.info("Waiting for extraction to begin...")
     else:
-        for flow in state.flow_status:
-            with st.container():
-                st.markdown(f"**{flow['tier']}**")
-                cols = st.columns(4)
-                cols[0].metric("Input", flow["input"])
-                cols[1].metric("Retrieved", flow["retrieved"])
-                cols[2].metric("Remaining", flow["remaining"])
-                cols[3].metric("Status", flow["status"])
-                st.divider()
+        render_truck_visualization()
     
     st.markdown("### Live Logs")
     if state.is_scraping:
@@ -183,8 +239,8 @@ with col2:
                 state.engine.stop()
                 st.warning("Stopping sequence initiated...")
 
-    log_container = st.container(height=300)
-    for log in reversed(state.logs[-100:]):
+    log_container = st.container(height=350)
+    for log in reversed(state.logs[-200:]):
         log_container.text(log)
 
 # Auto-refresh loop
