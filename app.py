@@ -5,6 +5,7 @@ import os
 import threading
 from scraper_engine import ScraperEngine
 import time
+import shutil
 
 st.set_page_config(page_title="Literature Scraper", layout="wide")
 
@@ -14,15 +15,10 @@ class AppState:
         self.progress = 0.0
         self.is_scraping = False
         self.engine = None
+        self.flow_status = [] # List of dicts: tier, input, retrieved, remaining, status
         self.stats = {
-            "Unpaywall": 0,
-            "PubMed Central": 0,
-            "arXiv": 0,
-            "DOAJ": 0,
-            "Semantic Scholar": 0,
-            "CORE API": 0,
-            "Sci-Hub": 0,
-            "Selenium & LLM": 0
+            "Unpaywall": 0, "PubMed Central": 0, "arXiv": 0, "DOAJ": 0,
+            "Semantic Scholar": 0, "CORE API": 0, "Sci-Hub": 0, "Selenium & LLM": 0
         }
 
 if 'app_state' not in st.session_state:
@@ -45,32 +41,24 @@ def stats_callback(source):
     else:
         state.stats[source] = 1
 
-st.title("📚 Universal Literature Extractor")
+def flow_callback(flow_data):
+    found = False
+    for i, item in enumerate(state.flow_status):
+        if item['tier'] == flow_data['tier']:
+            state.flow_status[i] = flow_data
+            found = True
+            break
+    if not found:
+        state.flow_status.append(flow_data)
 
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-
-if not st.session_state.logged_in:
-    st.subheader("Login Gateway")
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit_btn = st.form_submit_button("Login")
-        
-        if submit_btn:
-            if username == "ZS_HEOR" and password == "ZS_HEOR":
-                st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
-    st.stop()
+st.title("Universal Literature Extractor")
 
 col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("Configuration")
     
-    with st.expander("🔑 API Keys & Settings", expanded=True):
+    with st.expander("API Keys & Settings", expanded=True):
         groq_key = st.text_input("Groq API Key (Required)", type="password", help="For LLM abstract detection")
         core_key = st.text_input("CORE API Key", value="rdbipaBHZm02PjTOA8h6evxMyYsf47FD", type="password")
         ss_key = st.text_input("Semantic Scholar API Key", value="8D7qtvI8UC1xX5gQJnQj87NPBiPmzycV1NcIJ76w", type="password")
@@ -107,20 +95,16 @@ with col1:
                 state.logs = []
                 state.progress = 0.0
                 state.stats = {k: 0 for k in state.stats}
+                state.flow_status = []
                 
                 engine = ScraperEngine(
-                    excel_path=tmp_path, 
-                    log_callback=log_callback, 
-                    progress_callback=progress_callback, 
-                    stats_callback=stats_callback,
-                    max_workers=max_workers,
-                    groq_api_key=groq_key,
-                    unpaywall_email=unpaywall_email,
-                    ss_key=ss_key,
-                    core_api_key=core_key
+                    excel_path=tmp_path, log_callback=log_callback, 
+                    progress_callback=progress_callback, stats_callback=stats_callback,
+                    flow_callback=flow_callback, max_workers=max_workers,
+                    groq_api_key=groq_key, unpaywall_email=unpaywall_email,
+                    ss_key=ss_key, core_api_key=core_key
                 )
                 state.engine = engine
-                
                 threading.Thread(target=engine.run, daemon=True).start()
                 st.rerun()
                 
@@ -145,51 +129,53 @@ with col1:
                 else:
                     tmp_dir = tempfile.gettempdir()
                     tmp_path = os.path.join(tmp_dir, "manual_entry.xlsx")
-                    df = pd.DataFrame([{
-                        "DOI": doi_input,
-                        "Article Name": article_name_input,
-                        "Format Name": format_name_input,
-                        "Author Name": author_input,
-                        "PMCID": pmcid_input,
-                        "arXiv ID": arxiv_input,
-                        "Bing Link": bing_link_input
-                    }])
-                    df.to_excel(tmp_path, index=False)
+                    pd.DataFrame([{
+                        "DOI": doi_input, "Article Name": article_name_input, "Format Name": format_name_input,
+                        "Author Name": author_input, "PMCID": pmcid_input, "arXiv ID": arxiv_input, "Bing Link": bing_link_input
+                    }]).to_excel(tmp_path, index=False)
                     
                     state.is_scraping = True
                     state.logs = []
                     state.progress = 0.0
                     state.stats = {k: 0 for k in state.stats}
+                    state.flow_status = []
                     
                     engine = ScraperEngine(
-                        excel_path=tmp_path, 
-                        log_callback=log_callback, 
-                        progress_callback=progress_callback, 
-                        stats_callback=stats_callback,
-                        max_workers=max_workers,
-                        groq_api_key=groq_key,
-                        unpaywall_email=unpaywall_email,
-                        ss_key=ss_key,
-                        core_api_key=core_key
+                        excel_path=tmp_path, log_callback=log_callback, 
+                        progress_callback=progress_callback, stats_callback=stats_callback,
+                        flow_callback=flow_callback, max_workers=max_workers,
+                        groq_api_key=groq_key, unpaywall_email=unpaywall_email,
+                        ss_key=ss_key, core_api_key=core_key
                     )
                     state.engine = engine
-                    
                     threading.Thread(target=engine.run, daemon=True).start()
                     st.rerun()
 
 with col2:
     st.subheader("Real-Time Dashboard")
     
-    # Render Metrics Grid
-    st.markdown("### 📊 Extraction Success Metrics")
-    cols = st.columns(4)
-    stat_items = list(state.stats.items())
-    for i, (source, count) in enumerate(stat_items):
-        cols[i % 4].metric(label=source, value=count)
+    if not state.is_scraping and state.engine and os.path.exists(state.engine.output_dir):
+        st.success("Extraction Completed!")
+        zip_path = os.path.join(tempfile.gettempdir(), "extracted_literature")
+        shutil.make_archive(zip_path, 'zip', state.engine.output_dir)
+        with open(f"{zip_path}.zip", "rb") as f:
+            st.download_button("Download Extracted PDFs & Report", f, "extracted_pdfs.zip", type="primary", use_container_width=True)
+            
+    st.markdown("### Pipeline Flow Visualization")
+    if not state.flow_status:
+        st.info("Waiting for extraction to begin...")
+    else:
+        for flow in state.flow_status:
+            with st.container():
+                st.markdown(f"**{flow['tier']}**")
+                cols = st.columns(4)
+                cols[0].metric("Input", flow["input"])
+                cols[1].metric("Retrieved", flow["retrieved"])
+                cols[2].metric("Remaining", flow["remaining"])
+                cols[3].metric("Status", flow["status"])
+                st.divider()
     
-    st.divider()
-    
-    st.markdown("### 📜 Live Logs")
+    st.markdown("### Live Logs")
     if state.is_scraping:
         st.progress(state.progress)
         if st.button("Stop Scraper", type="primary"):
@@ -201,5 +187,7 @@ with col2:
     for log in reversed(state.logs[-100:]):
         log_container.text(log)
 
-    if st.button("Refresh UI"):
-        st.rerun()
+# Auto-refresh loop
+if state.is_scraping:
+    time.sleep(2)
+    st.rerun()
