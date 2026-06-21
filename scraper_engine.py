@@ -60,7 +60,7 @@ class UniversalPDFDownloader:
         if not self.unpaywall_email: return False, "No Unpaywall Email"
         url = f"https://api.unpaywall.org/v2/{doi}?email={self.unpaywall_email}"
         try:
-            res = requests.get(url, timeout=10)
+            res = requests.get(url, headers=self.headers, timeout=10)
             if res.status_code == 200:
                 data = res.json()
                 if data.get('is_oa') and data.get('best_oa_location'):
@@ -98,13 +98,16 @@ class UniversalPDFDownloader:
             return False, f"DOAJ Error: {str(e)}"
 
     def download_by_semantic_scholar(self, query_url, filename):
-        if not self.ss_key: return False, "No Semantic Scholar Key"
-        headers = {"x-api-key": self.ss_key}
+        headers = self.headers.copy()
+        if self.ss_key: headers["x-api-key"] = self.ss_key
         try:
             res = requests.get(query_url, headers=headers, timeout=12)
             if res.status_code == 429:
                 time.sleep(1.2)
                 res = requests.get(query_url, headers=headers, timeout=12)
+            elif res.status_code == 403 and self.ss_key:
+                # Retry without API key if 403 Forbidden is hit
+                res = requests.get(query_url, headers=self.headers, timeout=12)
                 
             if res.status_code == 200:
                 data = res.json()
@@ -157,7 +160,7 @@ class ScraperEngine:
         self.rules = self.load_rules()
         self.driver_pool = queue.Queue()
         self.report_data = []
-        self.zenrows_key = zenrows_key
+        self.scrape_do_key = scrape_do_key
         
         self.groq_api_key = groq_api_key
         self.groq_client = None
@@ -270,7 +273,7 @@ Text to analyze (first 8000 chars):
                 ("Semantic Scholar", self._tier_ss),
                 ("CORE API", self._tier_core),
                 ("Sci-Hub", self._tier_scihub),
-                ("ZenRows Proxy", self._tier_zenrows),
+                ("Scrape.do Proxy", self._tier_scrape_do),
                 ("Selenium & LLM", self._tier_selenium)
             ]
 
@@ -417,9 +420,9 @@ Text to analyze (first 8000 chars):
             except: pass
         return False, "Not found on Sci-Hub mirrors"
 
-    def _tier_zenrows(self, row, dups):
-        if not self.zenrows_key:
-            return False, "ZenRows API Key not configured"
+    def _tier_scrape_do(self, row, dups):
+        if not self.scrape_do_key:
+            return False, "Scrape.do API Key not configured"
             
         doi = str(row['DOI']).strip()
         format_name = str(row['Format Name']).strip()
@@ -427,22 +430,20 @@ Text to analyze (first 8000 chars):
             doi = f"https://doi.org/{doi}"
             
         if not doi or doi == 'nan' or not doi.startswith('http'):
-            return False, "Invalid DOI for ZenRows"
+            return False, "Invalid DOI for Scrape.do"
             
         try:
             # 1. Fetch raw HTML to bypass Cloudflare
             params = {
-                "apikey": self.zenrows_key,
+                "token": self.scrape_do_key,
                 "url": doi,
-                "js_render": "true",
-                "antibot": "true",
-                "premium_proxy": "true",
-                "proxy_country": "us"
+                "render": "true",
+                "super": "true"
             }
-            res = requests.get("https://api.zenrows.com/v1/", params=params, timeout=45)
+            res = requests.get("http://api.scrape.do/", params=params, timeout=45)
             
             if res.status_code != 200:
-                return False, f"ZenRows Blocked or Failed: {res.status_code}"
+                return False, f"Scrape.do Blocked or Failed: {res.status_code}"
                 
             html = res.text
             
@@ -465,15 +466,13 @@ Text to analyze (first 8000 chars):
                 domain = "{0.scheme}://{0.netloc}".format(urlparse(res.url))
                 pdf_url = domain + pdf_url
                 
-            # 3. Stream the actual PDF through ZenRows
+            # 3. Stream the actual PDF through Scrape.do
             pdf_params = {
-                "apikey": self.zenrows_key,
+                "token": self.scrape_do_key,
                 "url": pdf_url,
-                "antibot": "true",
-                "premium_proxy": "true",
-                "proxy_country": "us"
+                "super": "true"
             }
-            pdf_res = requests.get("https://api.zenrows.com/v1/", params=pdf_params, stream=True, timeout=60)
+            pdf_res = requests.get("http://api.scrape.do/", params=pdf_params, stream=True, timeout=60)
             
             content_type = pdf_res.headers.get('Content-Type', '').lower()
             if pdf_res.status_code == 200 and ('pdf' in content_type or 'octet-stream' in content_type):
@@ -482,12 +481,12 @@ Text to analyze (first 8000 chars):
                 with open(filepath, 'wb') as f:
                     for chunk in pdf_res.iter_content(chunk_size=8192):
                         if chunk: f.write(chunk)
-                return True, "Saved via ZenRows Premium Proxy"
+                return True, "Saved via Scrape.do Premium Proxy"
                 
-            return False, "ZenRows found PDF link but stream failed"
+            return False, "Scrape.do found PDF link but stream failed"
             
         except Exception as e:
-            return False, f"ZenRows Error: {str(e)}"
+            return False, f"Scrape.do Error: {str(e)}"
 
     def _tier_selenium(self, row, duplicate_dois):
         driver = self.driver_pool.get()
@@ -513,7 +512,27 @@ Text to analyze (first 8000 chars):
                 
                 # Cloudflare / Captcha Check
                 if "cloudflare" in page_text_raw or "please wait while your request is being verified" in page_text_raw or "captcha" in page_text_raw:
-                    self.log("log", f"[Selenium] Captcha/Cloudflare detected for '{article_name}'. Waiting 15s for auto-bypass...")
+                    self.log("log", f"[Selenium] Captcha/Cloudflare detected for '{article_name}'. Attempting human-like interaction...")
+                    time.sleep(3)
+                    
+                    try:
+                        # Attempt to switch to Cloudflare iframe and click the checkbox
+                        frames = driver.find_elements(By.TAG_NAME, "iframe")
+                        for frame in frames:
+                            src = frame.get_attribute("src")
+                            if src and ("challenge" in src.lower() or "turnstile" in src.lower()):
+                                driver.switch_to.frame(frame)
+                                time.sleep(2)
+                                box = driver.find_elements(By.CSS_SELECTOR, "input[type='checkbox'], .mark, .cb-lb, #challenge-stage")
+                                if box:
+                                    box[0].click()
+                                    self.log("log", "[Selenium] Clicked Cloudflare checkbox. Waiting for resolution...")
+                                driver.switch_to.default_content()
+                                break
+                    except Exception as e:
+                        driver.switch_to.default_content()
+                        pass
+                        
                     time.sleep(15)
                     page_text_raw = driver.get_page_source().lower()
                     
