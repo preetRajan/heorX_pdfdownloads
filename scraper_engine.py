@@ -215,7 +215,7 @@ Text to analyze (first 8000 chars):
         self.running = False
 
     def initialize_drivers(self):
-        self.log("log", f"Initializing {self.max_workers} browser instances...")
+        self.log("log", f"Initializing {self.max_workers} Chromium browsers in background...")
         for i in range(self.max_workers):
             if not self.running:
                 break
@@ -257,6 +257,9 @@ Text to analyze (first 8000 chars):
             remaining_df = df.copy()
             total_pdfs = len(remaining_df)
 
+            # Pre-initialize Chromium so they are ready instantly for the last tier
+            self.initialize_drivers()
+
             # Define Tiers
             tiers = [
                 ("Unpaywall", self._tier_unpaywall),
@@ -286,9 +289,6 @@ Text to analyze (first 8000 chars):
                     "remaining": input_count,
                     "status": "Processing..."
                 })
-
-                if tier_name == "Selenium & LLM":
-                    self.initialize_drivers()
 
                 success_indices = []
                 retrieved_this_tier = 0
@@ -320,9 +320,10 @@ Text to analyze (first 8000 chars):
                             completed_count += 1
                             self.stats_callback(tier_name)
                             self.record_history(article_name, tier_name, "Success", message)
-                            self.log("log", f"[{tier_name}] Downloaded: {article_name}")
+                            self.log("log", f"[{tier_name}] Downloaded: '{article_name}'")
                         else:
                             self.record_history(article_name, tier_name, "Failed", message)
+                            self.log("error", f"[{tier_name}] Failed: '{article_name}' - Reason: {message}")
 
                         self.progress_callback(completed_count / total_pdfs)
 
@@ -336,9 +337,6 @@ Text to analyze (first 8000 chars):
                     "remaining": len(remaining_df),
                     "status": "Completed"
                 })
-
-                if tier_name == "Selenium & LLM":
-                    self.cleanup_drivers()
 
             # Generate Report
             report_df = pd.DataFrame(self.report_data)
@@ -428,15 +426,25 @@ Text to analyze (first 8000 chars):
             is_conference = doi in duplicate_dois
 
             if not doi or doi == 'nan' or not doi.startswith('http'):
+                self.log("log", f"[Selenium] Invalid DOI for '{article_name}'. Pivoting to Bing Fallback.")
                 return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
 
             try:
                 driver.get(doi)
                 time.sleep(4)
-                page_text = driver.get_page_source().lower()
-                if "error" in driver.get_current_url().lower() or "not found" in page_text:
+                page_text_raw = driver.get_page_source().lower()
+                
+                # Cloudflare / Captcha Check
+                if "cloudflare" in page_text_raw or "please wait while your request is being verified" in page_text_raw or "captcha" in page_text_raw:
+                    self.log("log", f"[Selenium] Captcha/Cloudflare detected for '{article_name}'. Waiting 15s for auto-bypass...")
+                    time.sleep(15)
+                    page_text_raw = driver.get_page_source().lower()
+                    
+                if "error" in driver.get_current_url().lower() or "not found" in page_text_raw or "404" in page_text_raw:
+                     self.log("log", f"[Selenium] 404/Error on DOI for '{article_name}'. Pivoting to Bing Fallback.")
                      return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
             except:
+                self.log("log", f"[Selenium] Driver error on DOI for '{article_name}'. Pivoting to Bing Fallback.")
                 return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
 
             domain = urlparse(driver.get_current_url()).netloc.replace("www.", "")
@@ -484,7 +492,20 @@ Text to analyze (first 8000 chars):
                 if driver.is_element_present(xpath_btn):
                     driver.click(xpath_btn)
                     time.sleep(5)
-                    if self._selenium_print_pdf(driver, format_name): return True, "Saved via Button Click"
+                    if self._selenium_print_pdf(driver, format_name): return True, "Saved via Journal Rule Button"
+            
+            # Aggressive Button Hunt
+            for fallback_xpath in [
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'download pdf')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'download article')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'pdf')]"
+            ]:
+                if driver.is_element_present(fallback_xpath):
+                    try:
+                        driver.click(fallback_xpath)
+                        time.sleep(5)
+                        if self._selenium_print_pdf(driver, format_name): return True, "Saved via Aggressive Button Hunt"
+                    except: pass
         except: pass
         finally: driver.implicitly_wait(10)
 
