@@ -7,7 +7,6 @@ import time
 import base64
 import re
 import requests
-import subprocess
 import tempfile
 import shutil
 from urllib.parse import urlparse
@@ -31,7 +30,7 @@ class UniversalPDFDownloader:
             os.makedirs(self.download_dir)
 
     def _clean_filename(self, filename):
-        filename = re.sub(r'[\\/*?:"<>|]', "", filename)
+        filename = re.sub(r'[\\/*?:"<>|]', "", str(filename))
         return filename.strip()[:120]
 
     def _stream_pdf(self, url, filename, extra_headers=None):
@@ -51,13 +50,14 @@ class UniversalPDFDownloader:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
-                return True
-        except Exception:
-            pass
-        return False
+                return True, "Success"
+            else:
+                return False, f"Invalid Content-Type or Status: {response.status_code}"
+        except Exception as e:
+            return False, f"Stream Error: {str(e)}"
 
     def download_by_unpaywall(self, doi, filename):
-        if not self.unpaywall_email: return False
+        if not self.unpaywall_email: return False, "No Unpaywall Email"
         url = f"https://api.unpaywall.org/v2/{doi}?email={self.unpaywall_email}"
         try:
             res = requests.get(url, timeout=10)
@@ -67,20 +67,24 @@ class UniversalPDFDownloader:
                     pdf_url = data['best_oa_location'].get('url_for_pdf')
                     if pdf_url:
                         return self._stream_pdf(pdf_url, filename)
-        except:
-            pass
-        return False
+                return False, "Not Open Access"
+            return False, f"API Error {res.status_code}"
+        except Exception as e:
+            return False, f"Request Failed: {str(e)}"
 
     def download_by_pmcid(self, pmcid, filename):
+        if not pmcid or str(pmcid).lower() == 'nan': return False, "Missing PMCID"
         clean_id = str(pmcid).upper().replace("PMC", "").strip()
         url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{clean_id}/pdf/"
         return self._stream_pdf(url, filename)
 
     def download_by_arxiv_id(self, arxiv_id, filename):
+        if not arxiv_id or str(arxiv_id).lower() == 'nan': return False, "Missing arXiv ID"
         url = f"https://export.arxiv.org/pdf/{arxiv_id}.pdf"
         return self._stream_pdf(url, filename)
 
     def download_by_doaj(self, doi, filename):
+        if not doi or str(doi).lower() == 'nan': return False, "Missing DOI"
         api_url = f"https://doaj.org/api/v2/search/articles/doi:{doi}"
         try:
             res = requests.get(api_url, timeout=10)
@@ -88,14 +92,13 @@ class UniversalPDFDownloader:
                 article = res.json()["results"][0].get("bibjson", {})
                 for link in article.get("link", []):
                     if link.get("type") == "fulltext":
-                        if self._stream_pdf(link.get("url"), filename):
-                            return True
-        except:
-            pass
-        return False
+                        return self._stream_pdf(link.get("url"), filename)
+            return False, "Not found in DOAJ"
+        except Exception as e:
+            return False, f"DOAJ Error: {str(e)}"
 
     def download_by_semantic_scholar(self, query_url, filename):
-        if not self.ss_key: return False
+        if not self.ss_key: return False, "No Semantic Scholar Key"
         headers = {"x-api-key": self.ss_key}
         try:
             res = requests.get(query_url, headers=headers, timeout=12)
@@ -108,18 +111,18 @@ class UniversalPDFDownloader:
                 paper = data.get("data", [data])[0] if "data" in data else data
                 
                 if paper.get("openAccessPdf") and paper["openAccessPdf"].get("url"):
-                    if self._stream_pdf(paper["openAccessPdf"]["url"], filename):
-                        return True
+                    return self._stream_pdf(paper["openAccessPdf"]["url"], filename)
                         
                 if paper.get("externalIds") and "ArXiv" in paper["externalIds"]:
-                    if self.download_by_arxiv_id(paper["externalIds"]["ArXiv"], filename):
-                        return True
-        except:
-            pass
-        return False
+                    return self.download_by_arxiv_id(paper["externalIds"]["ArXiv"], filename)
+                    
+                return False, "No Open Access PDF found"
+            return False, f"API Error {res.status_code}"
+        except Exception as e:
+            return False, f"SS Error: {str(e)}"
 
     def download_by_core(self, query, filename):
-        if not self.core_api_key: return False
+        if not self.core_api_key: return False, "No CORE API Key"
         
         search_url = "https://api.core.ac.uk/v3/search/works"
         core_headers = {"Authorization": f"Bearer {self.core_api_key}", "Content-Type": "application/json"}
@@ -134,50 +137,26 @@ class UniversalPDFDownloader:
                 return self._stream_pdf(dl_url, filename, extra_headers=dl_headers)
             elif res.status_code == 429:
                 time.sleep(2)
-        except:
-            pass
-        return False
-
-    def get_pdf(self, doi, title, author, pmcid, arxiv_id, filename):
-        if pmcid and pmcid != 'nan':
-            if self.download_by_pmcid(pmcid, filename): return True, "PubMed Central"
-        if arxiv_id and arxiv_id != 'nan':
-            if self.download_by_arxiv_id(arxiv_id, filename): return True, "arXiv"
-            
-        if doi and doi != 'nan':
-            if self.download_by_unpaywall(doi, filename): return True, "Unpaywall"
-            if self.download_by_doaj(doi, filename): return True, "DOAJ"
-            ss_url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}?fields=title,openAccessPdf,externalIds"
-            if self.download_by_semantic_scholar(ss_url, filename): return True, "Semantic Scholar"
-            
-            core_query = f'(doi:"{doi}") AND _exists_:fullText'
-            if self.download_by_core(core_query, filename): return True, "CORE API"
-            
-        if title and title != 'nan':
-            ss_query = f"{title} {author}".strip()
-            ss_url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={ss_query}&limit=1&fields=title,openAccessPdf,externalIds"
-            if self.download_by_semantic_scholar(ss_url, filename): return True, "Semantic Scholar"
-            
-            query_parts = [f'title:"{title}"']
-            if author and author != 'nan': query_parts.append(f'authors:"{author}"')
-            core_query = f"({' AND '.join(query_parts)}) AND _exists_:fullText"
-            if self.download_by_core(core_query, filename): return True, "CORE API"
-            
-        return False, None
+                return False, "Rate Limited"
+            return False, "Not found in CORE"
+        except Exception as e:
+            return False, f"CORE Error: {str(e)}"
 
 class ScraperEngine:
-    def __init__(self, excel_path, log_callback, progress_callback, stats_callback, max_workers=3, 
+    def __init__(self, excel_path, log_callback, progress_callback, stats_callback, flow_callback, max_workers=3, 
                  groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None):
         self.excel_path = excel_path
         self.log_callback = log_callback
         self.progress_callback = progress_callback
         self.stats_callback = stats_callback
+        self.flow_callback = flow_callback
         self.max_workers = max_workers
         self.running = True
         self.output_dir = os.path.join(os.path.dirname(excel_path), "extracted_literature")
         os.makedirs(self.output_dir, exist_ok=True)
         self.rules = self.load_rules()
         self.driver_pool = queue.Queue()
+        self.report_data = []
         
         self.groq_api_key = groq_api_key
         self.groq_client = None
@@ -199,7 +178,6 @@ class ScraperEngine:
         if not self.groq_client:
             return {"is_full_paper": True, "extracted_abstract": ""}
             
-        self.log("log", f"Analyzing page with LLM for {article_name}...")
         prompt = f"""You are an expert academic assistant. Analyze the following webpage text from an academic publisher.
 Determine if the provided text contains the full body of the research paper (e.g., Introduction, Methods, Results, Discussion) or if it only provides the Abstract/Summary (because the full paper is behind a paywall).
 Respond in pure JSON format with exactly two keys:
@@ -220,7 +198,6 @@ Text to analyze (first 8000 chars):
             result = json.loads(response_str)
             return result
         except Exception as e:
-            self.log("error", f"LLM Analysis failed for {article_name}: {e}")
             return {"is_full_paper": True, "extracted_abstract": ""}
 
     def log(self, msg_type, data):
@@ -232,36 +209,38 @@ Text to analyze (first 8000 chars):
             with open(rules_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            self.log("error", f"Failed to load journal rules: {e}. Using default.")
             return {"default": {"pdf_meta_tag": "citation_pdf_url", "button_xpath": "//button[contains(., 'Download PDF')]", "timeout": 20}}
 
     def stop(self):
         self.running = False
 
     def initialize_drivers(self):
-        self.log("log", f"Initializing {self.max_workers} browser instances sequentially...")
+        self.log("log", f"Initializing {self.max_workers} browser instances...")
         for i in range(self.max_workers):
             if not self.running:
                 break
             try:
-                # Streamlit Cloud FIX: uc=False (read-only filesystem blocks uc_driver binary patch), headless=True
                 driver = Driver(uc=False, headless=True, no_sandbox=True)
                 self.driver_pool.put(driver)
-                self.log("log", f"Browser {i+1} initialized.")
             except Exception as e:
                 self.log("error", f"Failed to init browser {i+1}: {e}")
 
     def cleanup_drivers(self):
         self.log("log", "Cleaning up browser instances...")
-        close_count = 0
         while not self.driver_pool.empty():
             driver = self.driver_pool.get()
             try:
                 driver.quit()
-                close_count += 1
             except:
                 pass
-        self.log("log", f"Cleaned up {close_count} browsers.")
+
+    def record_history(self, article_name, tier, status, message):
+        self.report_data.append({
+            "Article Name": article_name,
+            "Tier": tier,
+            "Status": status,
+            "Message": message
+        })
 
     def run(self):
         try:
@@ -275,269 +254,287 @@ Text to analyze (first 8000 chars):
                     return
 
             duplicate_dois = df[df.duplicated(subset=['DOI'], keep=False)]['DOI'].dropna().unique()
-            self.log("log", f"Found {len(duplicate_dois)} duplicate DOIs for Conference process.")
+            remaining_df = df.copy()
+            total_pdfs = len(remaining_df)
 
-            self.initialize_drivers()
-            if not self.running:
-                self.cleanup_drivers()
-                return
+            # Define Tiers
+            tiers = [
+                ("Unpaywall", self._tier_unpaywall),
+                ("PubMed Central", self._tier_pmc),
+                ("arXiv", self._tier_arxiv),
+                ("DOAJ", self._tier_doaj),
+                ("Semantic Scholar", self._tier_ss),
+                ("CORE API", self._tier_core),
+                ("Sci-Hub", self._tier_scihub),
+                ("Selenium & LLM", self._tier_selenium)
+            ]
 
-            total_rows = len(df)
-            completed = 0
+            completed_count = 0
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = []
-                for index, row in df.iterrows():
-                    futures.append(executor.submit(self.process_row_with_driver, row, duplicate_dois))
+            for tier_name, tier_func in tiers:
+                if not self.running or len(remaining_df) == 0:
+                    break
 
-                for future in concurrent.futures.as_completed(futures):
-                    if not self.running:
-                        self.log("log", "Process stopped by user.")
-                        break
-                    try:
-                        future.result()
-                    except Exception as e:
-                        self.log("error", f"Thread error: {e}")
-                    
-                    completed += 1
-                    progress = completed / total_rows
-                    self.progress_callback(progress)
+                input_count = len(remaining_df)
+                self.log("log", f"Starting {tier_name} pass for {input_count} remaining PDFs...")
+                
+                # Flow Update: Processing
+                self.flow_callback({
+                    "tier": tier_name,
+                    "input": input_count,
+                    "retrieved": 0,
+                    "remaining": input_count,
+                    "status": "Processing..."
+                })
 
-            self.log("done", None)
+                if tier_name == "Selenium & LLM":
+                    self.initialize_drivers()
+
+                success_indices = []
+                retrieved_this_tier = 0
+
+                # Batch processing
+                workers = 10 if tier_name != "Selenium & LLM" else self.max_workers
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+                    future_to_idx = {
+                        executor.submit(tier_func, row, duplicate_dois): idx 
+                        for idx, row in remaining_df.iterrows()
+                    }
+
+                    for future in concurrent.futures.as_completed(future_to_idx):
+                        if not self.running:
+                            break
+                        idx = future_to_idx[future]
+                        row = remaining_df.loc[idx]
+                        article_name = str(row['Article Name']).strip()
+                        
+                        try:
+                            success, message = future.result()
+                        except Exception as e:
+                            success, message = False, f"Thread Crash: {str(e)}"
+
+                        if success:
+                            success_indices.append(idx)
+                            retrieved_this_tier += 1
+                            completed_count += 1
+                            self.stats_callback(tier_name)
+                            self.record_history(article_name, tier_name, "Success", message)
+                            self.log("log", f"[{tier_name}] Downloaded: {article_name}")
+                        else:
+                            self.record_history(article_name, tier_name, "Failed", message)
+
+                        self.progress_callback(completed_count / total_pdfs)
+
+                remaining_df = remaining_df.drop(index=success_indices)
+                
+                # Flow Update: Completed
+                self.flow_callback({
+                    "tier": tier_name,
+                    "input": input_count,
+                    "retrieved": retrieved_this_tier,
+                    "remaining": len(remaining_df),
+                    "status": "Completed"
+                })
+
+                if tier_name == "Selenium & LLM":
+                    self.cleanup_drivers()
+
+            # Generate Report
+            report_df = pd.DataFrame(self.report_data)
+            report_path = os.path.join(self.output_dir, "scraping_report.xlsx")
+            report_df.to_excel(report_path, index=False)
+            self.log("log", "Saved scraping_report.xlsx to output directory.")
+
         except Exception as e:
             self.log("error", f"Fatal error: {str(e)}")
         finally:
             self.cleanup_drivers()
             self.log_callback("done", None)
 
-    def process_row_with_driver(self, row, duplicate_dois):
-        if not self.running:
-            return
-            
+    # --- Tier Functions ---
+    def _tier_unpaywall(self, row, dups):
+        doi, fmt = str(row['DOI']).strip(), str(row['Format Name']).strip()
+        if doi and doi != 'nan':
+            return self.universal_downloader.download_by_unpaywall(doi, fmt)
+        return False, "Invalid DOI"
+
+    def _tier_pmc(self, row, dups):
+        pmcid, fmt = str(row.get('PMCID', '')).strip(), str(row['Format Name']).strip()
+        return self.universal_downloader.download_by_pmcid(pmcid, fmt)
+
+    def _tier_arxiv(self, row, dups):
+        arxiv_id, fmt = str(row.get('arXiv ID', '')).strip(), str(row['Format Name']).strip()
+        return self.universal_downloader.download_by_arxiv_id(arxiv_id, fmt)
+
+    def _tier_doaj(self, row, dups):
+        doi, fmt = str(row['DOI']).strip(), str(row['Format Name']).strip()
+        if doi and doi != 'nan':
+            return self.universal_downloader.download_by_doaj(doi, fmt)
+        return False, "Invalid DOI"
+
+    def _tier_ss(self, row, dups):
+        doi, title, author, fmt = str(row['DOI']).strip(), str(row['Article Name']).strip(), str(row.get('Author Name', '')).strip(), str(row['Format Name']).strip()
+        if doi and doi != 'nan':
+            url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}?fields=title,openAccessPdf,externalIds"
+            suc, msg = self.universal_downloader.download_by_semantic_scholar(url, fmt)
+            if suc: return suc, msg
+        if title and title != 'nan':
+            query = f"{title} {author}".strip()
+            url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&limit=1&fields=title,openAccessPdf,externalIds"
+            return self.universal_downloader.download_by_semantic_scholar(url, fmt)
+        return False, "Missing Title and DOI"
+
+    def _tier_core(self, row, dups):
+        doi, title, author, fmt = str(row['DOI']).strip(), str(row['Article Name']).strip(), str(row.get('Author Name', '')).strip(), str(row['Format Name']).strip()
+        if doi and doi != 'nan':
+            query = f'(doi:"{doi}") AND _exists_:fullText'
+            suc, msg = self.universal_downloader.download_by_core(query, fmt)
+            if suc: return suc, msg
+        if title and title != 'nan':
+            parts = [f'title:"{title}"']
+            if author and author != 'nan': parts.append(f'authors:"{author}"')
+            query = f"({' AND '.join(parts)}) AND _exists_:fullText"
+            return self.universal_downloader.download_by_core(query, fmt)
+        return False, "Missing Title and DOI"
+
+    def _tier_scihub(self, row, dups):
+        doi, fmt = str(row['DOI']).strip(), str(row['Format Name']).strip()
+        if not doi or doi == 'nan': return False, "Missing DOI"
+        mirrors = ["https://sci-hub.se", "https://sci-hub.st", "https://sci-hub.ru"]
+        for mirror in mirrors:
+            try:
+                res = requests.get(f"{mirror}/{doi}", headers=self.universal_downloader.headers, timeout=15)
+                if res.status_code == 200:
+                    pdf_match = re.search(r'<embed[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
+                    if not pdf_match: pdf_match = re.search(r'<iframe[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
+                    if pdf_match:
+                        pdf_url = pdf_match.group(1)
+                        if pdf_url.startswith("//"): pdf_url = "https:" + pdf_url
+                        elif pdf_url.startswith("/"): pdf_url = mirror + pdf_url
+                        suc, msg = self.universal_downloader._stream_pdf(pdf_url, fmt)
+                        if suc: return True, "Sci-Hub Extraction Success"
+            except: pass
+        return False, "Not found on Sci-Hub mirrors"
+
+    def _tier_selenium(self, row, duplicate_dois):
         driver = self.driver_pool.get()
         try:
-            self.process_row(driver, row, duplicate_dois)
+            doi = str(row['DOI']).strip()
+            article_name = str(row['Article Name']).strip()
+            format_name = str(row['Format Name']).strip()
+            author_name = str(row.get('Author Name', '')).strip()
+            bing_link = str(row.get('Bing Link', '')).strip()
+            is_conference = doi in duplicate_dois
+
+            if not doi or doi == 'nan' or not doi.startswith('http'):
+                return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+
+            try:
+                driver.get(doi)
+                time.sleep(4)
+                page_text = driver.get_page_source().lower()
+                if "error" in driver.get_current_url().lower() or "not found" in page_text:
+                     return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+            except:
+                return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+
+            domain = urlparse(driver.get_current_url()).netloc.replace("www.", "")
+            
+            if is_conference:
+                suc, msg = self._selenium_conference(driver, article_name, format_name)
+                if suc: return suc, msg
+
+            rule = self.rules.get(domain, self.rules.get("default", {}))
+            return self._selenium_execute_routes(driver, rule, format_name, article_name)
         finally:
             self.driver_pool.put(driver)
 
-    def download_via_scihub(self, doi, format_name):
-        if not doi or str(doi) == 'nan':
-            return False
-            
-        self.log("log", f"Attempting Native Sci-Hub Extraction for DOI: {doi}")
-        mirrors = ["https://sci-hub.se", "https://sci-hub.st", "https://sci-hub.ru"]
-        
-        for mirror in mirrors:
-            try:
-                url = f"{mirror}/{doi}"
-                res = requests.get(url, headers=self.universal_downloader.headers, timeout=15)
-                if res.status_code == 200:
-                    import re
-                    # Sci-Hub usually puts the PDF link in an embed or iframe tag
-                    pdf_match = re.search(r'<embed[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
-                    if not pdf_match:
-                        pdf_match = re.search(r'<iframe[^>]*src=[\'"]([^\'"]+)[\'"]', res.text)
-                        
-                    if pdf_match:
-                        pdf_url = pdf_match.group(1)
-                        # Normalize protocol-relative or absolute-path URLs
-                        if pdf_url.startswith("//"):
-                            pdf_url = "https:" + pdf_url
-                        elif pdf_url.startswith("/"):
-                            pdf_url = mirror + pdf_url
-                            
-                        # Stream the PDF directly
-                        if self.universal_downloader._stream_pdf(pdf_url, format_name):
-                            return True
-            except Exception as e:
-                pass
-                
-        return False
-
-    def process_row(self, driver, row, duplicate_dois):
-        doi = str(row['DOI']).strip()
-        article_name = str(row['Article Name']).strip()
-        format_name = str(row['Format Name']).strip()
-        author_name = str(row.get('Author Name', '')).strip()
-        pmcid = str(row.get('PMCID', '')).strip()
-        arxiv_id = str(row.get('arXiv ID', '')).strip()
-        bing_link = str(row.get('Bing Link', '')).strip()
-
-        is_conference = doi in duplicate_dois
-        self.log("log", f"============================\nProcessing: {article_name}")
-
-        # Tier 1-5: Universal Downloader
-        success, source = self.universal_downloader.get_pdf(doi, article_name, author_name, pmcid, arxiv_id, format_name)
-        if success:
-            self.log("log", f"✅ Successfully downloaded '{format_name}' via {source}")
-            self.stats_callback(source)
-            return
-            
-        # Tier 6: Native Sci-Hub
-        if self.download_via_scihub(doi, format_name):
-            self.log("log", f"✅ Successfully downloaded '{format_name}' via Sci-Hub")
-            self.stats_callback("Sci-Hub")
-            return
-
-        # Tier 7: Selenium / LLM
-        self.log("log", f"⚠️ API Fallbacks exhausted. Initiating Selenium Engine for {article_name}...")
-
-        if not doi or doi == 'nan' or not doi.startswith('http'):
-            self.log("log", f"Invalid DOI. Attempting Bing Fallback.")
-            if self.route_4_bing_fallback(driver, article_name, author_name, bing_link, format_name):
-                self.stats_callback("Selenium & LLM")
-            return
-
-        try:
-            driver.get(doi)
-            time.sleep(4)
-            
-            page_text = driver.get_page_source().lower()
-            if "error" in driver.get_current_url().lower() or "not found" in page_text:
-                 self.log("log", f"DOI dead. Attempting Bing Fallback.")
-                 if self.route_4_bing_fallback(driver, article_name, author_name, bing_link, format_name):
-                     self.stats_callback("Selenium & LLM")
-                 return
-        except Exception as e:
-            self.log("log", f"DOI Nav Error. Attempting Bing Fallback.")
-            if self.route_4_bing_fallback(driver, article_name, author_name, bing_link, format_name):
-                self.stats_callback("Selenium & LLM")
-            return
-
-        current_url = driver.get_current_url()
-        domain = urlparse(current_url).netloc.replace("www.", "")
-        
-        if is_conference:
-            if self.route_3_conference(driver, article_name, format_name):
-                self.stats_callback("Selenium & LLM")
-                return
-
-        rule = self.rules.get(domain, self.rules.get("default", {}))
-        
-        if self.execute_route_1_and_2(driver, rule, format_name, article_name):
-            self.stats_callback("Selenium & LLM")
-        else:
-            self.log("log", f"❌ All extraction routes failed for {article_name}.")
-
-    def execute_route_1_and_2(self, driver, rule, format_name, article_name):
-        try:
-            page_text_raw = driver.get_text("body")
-        except:
-            page_text_raw = driver.get_page_source()
+    def _selenium_execute_routes(self, driver, rule, format_name, article_name):
+        try: page_text_raw = driver.get_text("body")
+        except: page_text_raw = driver.get_page_source()
             
         analysis = self.analyze_page_with_llm(page_text_raw, article_name)
-        
         if not analysis.get("is_full_paper", True):
-            self.log("log", f"LLM detected abstract-only. Saving abstract PDF directly.")
             abstract_text = analysis.get("extracted_abstract", "")
             if abstract_text:
                 try:
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Arial", size=12)
-                    safe_text = abstract_text.encode('latin-1', 'replace').decode('latin-1')
-                    pdf.multi_cell(0, 10, txt=f"Title: {article_name}\n\nAbstract:\n{safe_text}")
-                    save_path = os.path.join(self.output_dir, f"{format_name}_abstract.pdf")
-                    pdf.output(save_path)
-                    return True
+                    pdf.multi_cell(0, 10, txt=f"Title: {article_name}\n\nAbstract:\n{abstract_text.encode('latin-1', 'replace').decode('latin-1')}")
+                    pdf.output(os.path.join(self.output_dir, f"{format_name}_abstract.pdf"))
+                    return True, "Saved LLM Extracted Abstract"
                 except Exception as e:
-                    self.log("error", f"Abstract PDF Generation Error: {e}")
-        
+                    pass
+
         timeout = rule.get("timeout", 15)
         pdf_meta = rule.get("pdf_meta_tag", "citation_pdf_url")
         xpath_btn = rule.get("button_xpath", "")
 
         try:
             driver.implicitly_wait(min(timeout, 5))
-            meta_element = driver.find_elements(By.CSS_SELECTOR, f"meta[name='{pdf_meta}']")
-            if meta_element:
-                pdf_url = meta_element[0].get_attribute("content")
-                if pdf_url:
-                    driver.get(pdf_url)
-                    time.sleep(5)
-                    self.save_pdf_from_browser(driver, format_name)
-                    return True
+            meta = driver.find_elements(By.CSS_SELECTOR, f"meta[name='{pdf_meta}']")
+            if meta and meta[0].get_attribute("content"):
+                driver.get(meta[0].get_attribute("content"))
+                time.sleep(5)
+                if self._selenium_print_pdf(driver, format_name): return True, "Saved via Meta Tag"
             
             if xpath_btn:
-                try:
-                    if driver.is_element_present(xpath_btn):
-                        driver.click(xpath_btn)
-                        time.sleep(5)
-                        self.save_pdf_from_browser(driver, format_name)
-                        return True
-                except:
-                    pass
-        except Exception:
-            pass
-        finally:
-            driver.implicitly_wait(10)
+                if driver.is_element_present(xpath_btn):
+                    driver.click(xpath_btn)
+                    time.sleep(5)
+                    if self._selenium_print_pdf(driver, format_name): return True, "Saved via Button Click"
+        except: pass
+        finally: driver.implicitly_wait(10)
 
-        return self.route_2_print_abstract(driver, format_name, article_name)
+        if self._selenium_print_pdf(driver, format_name): return True, "Saved Webpage Print Fallback"
+        return False, "Selenium Routes Failed"
 
-    def route_2_print_abstract(self, driver, format_name, article_name="article"):
+    def _selenium_print_pdf(self, driver, format_name):
         try:
-            pdf_data = driver.execute_cdp_cmd("Page.printToPDF", {
-                "landscape": False, "displayHeaderFooter": False, "printBackground": True, "preferCSSPageSize": True
-            })
-            pdf_bytes = base64.b64decode(pdf_data['data'])
-            save_path = os.path.join(self.output_dir, f"{format_name}.pdf")
-            with open(save_path, "wb") as f:
-                f.write(pdf_bytes)
+            pdf_data = driver.execute_cdp_cmd("Page.printToPDF", {"landscape": False, "displayHeaderFooter": False, "printBackground": True, "preferCSSPageSize": True})
+            with open(os.path.join(self.output_dir, f"{format_name}.pdf"), "wb") as f:
+                f.write(base64.b64decode(pdf_data['data']))
             return True
-        except Exception as e:
-            return False
+        except: return False
 
-    def route_3_conference(self, driver, article_name, format_name):
+    def _selenium_conference(self, driver, article_name, format_name):
         try:
-            paragraphs = driver.find_elements(By.CSS_SELECTOR, "p")
             best_match, best_score = None, 0
-            for p in paragraphs:
+            for p in driver.find_elements(By.CSS_SELECTOR, "p"):
                 text = p.text.strip()
                 if not text: continue
                 score = fuzz.token_set_ratio(article_name, text)
                 if score > best_score:
-                    best_score = score
-                    best_match = text
+                    best_score, best_match = score, text
                     
             if best_score > 90 and best_match:
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_font("Arial", size=12)
-                safe_text = best_match.encode('latin-1', 'replace').decode('latin-1')
-                pdf.multi_cell(0, 10, txt=safe_text)
-                save_path = os.path.join(self.output_dir, f"{format_name}_conference.pdf")
-                pdf.output(save_path)
-                return True
-        except Exception:
-            pass
-        return False
+                pdf.multi_cell(0, 10, txt=best_match.encode('latin-1', 'replace').decode('latin-1'))
+                pdf.output(os.path.join(self.output_dir, f"{format_name}_conference.pdf"))
+                return True, "Extracted Conference Paragraph"
+        except: pass
+        return False, "Conference match failed"
 
-    def route_4_bing_fallback(self, driver, article_name, author_name, bing_link, format_name):
+    def _selenium_bing_fallback(self, driver, article_name, author_name, bing_link, format_name):
         try:
             query = f"{article_name} {author_name}".strip()
             search_url = bing_link if bing_link and bing_link != 'nan' else f"https://www.bing.com/search?q={query}"
             driver.get(search_url)
             time.sleep(3)
             
-            results = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")
-            urls = [el.get_attribute("href") for el in results[:10]]
-            
+            urls = [el.get_attribute("href") for el in driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")[:10]]
             for url in urls:
-                if not self.running: break
-                if not url: continue
+                if not self.running or not url: continue
                 driver.get(url)
                 time.sleep(3)
-                
-                page_title = driver.title
-                page_body = driver.get_text("body")[:5000]
-                
-                if max(fuzz.token_set_ratio(article_name, page_title), fuzz.token_set_ratio(article_name, page_body)) > 90:
+                if max(fuzz.token_set_ratio(article_name, driver.title), fuzz.token_set_ratio(article_name, driver.get_text("body")[:5000])) > 90:
                     domain = urlparse(url).netloc.replace("www.", "")
                     rule = self.rules.get(domain, self.rules.get("default", {}))
-                    return self.execute_route_1_and_2(driver, rule, format_name, article_name)
-        except Exception:
-            pass
-        return False
-
-    def save_pdf_from_browser(self, driver, format_name):
-        self.route_2_print_abstract(driver, format_name)
+                    suc, msg = self._selenium_execute_routes(driver, rule, format_name, article_name)
+                    if suc: return suc, msg
+        except: pass
+        return False, "Bing Fallback Failed"
