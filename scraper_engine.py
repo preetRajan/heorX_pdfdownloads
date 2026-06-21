@@ -144,7 +144,7 @@ class UniversalPDFDownloader:
 
 class ScraperEngine:
     def __init__(self, excel_path, log_callback, progress_callback, stats_callback, flow_callback, max_workers=3, 
-                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None):
+                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None, zenrows_key=None):
         self.excel_path = excel_path
         self.log_callback = log_callback
         self.progress_callback = progress_callback
@@ -157,6 +157,7 @@ class ScraperEngine:
         self.rules = self.load_rules()
         self.driver_pool = queue.Queue()
         self.report_data = []
+        self.zenrows_key = zenrows_key
         
         self.groq_api_key = groq_api_key
         self.groq_client = None
@@ -269,6 +270,7 @@ Text to analyze (first 8000 chars):
                 ("Semantic Scholar", self._tier_ss),
                 ("CORE API", self._tier_core),
                 ("Sci-Hub", self._tier_scihub),
+                ("ZenRows Proxy", self._tier_zenrows),
                 ("Selenium & LLM", self._tier_selenium)
             ]
 
@@ -414,6 +416,78 @@ Text to analyze (first 8000 chars):
                         if suc: return True, "Sci-Hub Extraction Success"
             except: pass
         return False, "Not found on Sci-Hub mirrors"
+
+    def _tier_zenrows(self, row, dups):
+        if not self.zenrows_key:
+            return False, "ZenRows API Key not configured"
+            
+        doi = str(row['DOI']).strip()
+        format_name = str(row['Format Name']).strip()
+        if doi.startswith('10.'):
+            doi = f"https://doi.org/{doi}"
+            
+        if not doi or doi == 'nan' or not doi.startswith('http'):
+            return False, "Invalid DOI for ZenRows"
+            
+        try:
+            # 1. Fetch raw HTML to bypass Cloudflare
+            params = {
+                "apikey": self.zenrows_key,
+                "url": doi,
+                "js_render": "true",
+                "antibot": "true",
+                "premium_proxy": "true",
+                "proxy_country": "us"
+            }
+            res = requests.get("https://api.zenrows.com/v1/", params=params, timeout=45)
+            
+            if res.status_code != 200:
+                return False, f"ZenRows Blocked or Failed: {res.status_code}"
+                
+            html = res.text
+            
+            # 2. Extract PDF Link from DOM
+            pdf_url = None
+            meta_match = re.search(r'<meta\s+(?:[^>]*?\s+)?name=[\'"]citation_pdf_url[\'"]\s+content=[\'"]([^\'"]+)[\'"]', html, re.IGNORECASE)
+            if meta_match:
+                pdf_url = meta_match.group(1)
+            else:
+                # Fallback regex hunt for download buttons
+                anchor_match = re.search(r'<a[^>]+href=[\'"]([^\'"]+\.pdf[^\'"]*)[\'"][^>]*>', html, re.IGNORECASE)
+                if anchor_match:
+                    pdf_url = anchor_match.group(1)
+            
+            if not pdf_url:
+                return False, "Bypassed Cloudflare but no PDF link found in DOM"
+                
+            # Handle relative URLs
+            if pdf_url.startswith('/'):
+                domain = "{0.scheme}://{0.netloc}".format(urlparse(res.url))
+                pdf_url = domain + pdf_url
+                
+            # 3. Stream the actual PDF through ZenRows
+            pdf_params = {
+                "apikey": self.zenrows_key,
+                "url": pdf_url,
+                "antibot": "true",
+                "premium_proxy": "true",
+                "proxy_country": "us"
+            }
+            pdf_res = requests.get("https://api.zenrows.com/v1/", params=pdf_params, stream=True, timeout=60)
+            
+            content_type = pdf_res.headers.get('Content-Type', '').lower()
+            if pdf_res.status_code == 200 and ('pdf' in content_type or 'octet-stream' in content_type):
+                safe_name = self.universal_downloader._clean_filename(format_name)
+                filepath = os.path.join(self.output_dir, f"{safe_name}.pdf")
+                with open(filepath, 'wb') as f:
+                    for chunk in pdf_res.iter_content(chunk_size=8192):
+                        if chunk: f.write(chunk)
+                return True, "Saved via ZenRows Premium Proxy"
+                
+            return False, "ZenRows found PDF link but stream failed"
+            
+        except Exception as e:
+            return False, f"ZenRows Error: {str(e)}"
 
     def _tier_selenium(self, row, duplicate_dois):
         driver = self.driver_pool.get()
