@@ -147,7 +147,7 @@ class UniversalPDFDownloader:
 
 class ScraperEngine:
     def __init__(self, excel_path, log_callback, progress_callback, stats_callback, flow_callback, max_workers=3, 
-                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None, zenrows_key=None):
+                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None, scrape_do_key=None):
         self.excel_path = excel_path
         self.log_callback = log_callback
         self.progress_callback = progress_callback
