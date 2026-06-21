@@ -425,9 +425,12 @@ Text to analyze (first 8000 chars):
             bing_link = str(row.get('Bing Link', '')).strip()
             is_conference = doi in duplicate_dois
 
+            if doi.startswith('10.'):
+                doi = f"https://doi.org/{doi}"
+
             if not doi or doi == 'nan' or not doi.startswith('http'):
-                self.log("log", f"[Selenium] Invalid DOI for '{article_name}'. Pivoting to Bing Fallback.")
-                return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+                self.log("log", f"[Selenium] Invalid DOI for '{article_name}'. Pivoting to Search Fallback.")
+                return self._selenium_search_fallback(driver, article_name, author_name, bing_link, format_name)
 
             try:
                 driver.get(doi)
@@ -441,11 +444,11 @@ Text to analyze (first 8000 chars):
                     page_text_raw = driver.get_page_source().lower()
                     
                 if "error" in driver.get_current_url().lower() or "not found" in page_text_raw or "404" in page_text_raw:
-                     self.log("log", f"[Selenium] 404/Error on DOI for '{article_name}'. Pivoting to Bing Fallback.")
-                     return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+                     self.log("log", f"[Selenium] 404/Error on DOI for '{article_name}'. Pivoting to Search Fallback.")
+                     return self._selenium_search_fallback(driver, article_name, author_name, bing_link, format_name)
             except:
-                self.log("log", f"[Selenium] Driver error on DOI for '{article_name}'. Pivoting to Bing Fallback.")
-                return self._selenium_bing_fallback(driver, article_name, author_name, bing_link, format_name)
+                self.log("log", f"[Selenium] Driver error on DOI for '{article_name}'. Pivoting to Search Fallback.")
+                return self._selenium_search_fallback(driver, article_name, author_name, bing_link, format_name)
 
             domain = urlparse(driver.get_current_url()).netloc.replace("www.", "")
             
@@ -540,22 +543,39 @@ Text to analyze (first 8000 chars):
         except: pass
         return False, "Conference match failed"
 
-    def _selenium_bing_fallback(self, driver, article_name, author_name, bing_link, format_name):
-        try:
-            query = f"{article_name} {author_name}".strip()
-            search_url = bing_link if bing_link and bing_link != 'nan' else f"https://www.bing.com/search?q={query}"
-            driver.get(search_url)
-            time.sleep(3)
-            
-            urls = [el.get_attribute("href") for el in driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")[:10]]
-            for url in urls:
-                if not self.running or not url: continue
-                driver.get(url)
+    def _selenium_search_fallback(self, driver, article_name, author_name, bing_link, format_name):
+        query = f"{article_name} {author_name}".strip()
+        search_urls = [
+            bing_link if bing_link and bing_link != 'nan' else None,
+            f"https://html.duckduckgo.com/html/?q={query}",
+            f"https://www.bing.com/search?q={query}"
+        ]
+        
+        for search_url in [u for u in search_urls if u]:
+            try:
+                driver.get(search_url)
                 time.sleep(3)
-                if max(fuzz.token_set_ratio(article_name, driver.title), fuzz.token_set_ratio(article_name, driver.get_text("body")[:5000])) > 90:
-                    domain = urlparse(url).netloc.replace("www.", "")
-                    rule = self.rules.get(domain, self.rules.get("default", {}))
-                    suc, msg = self._selenium_execute_routes(driver, rule, format_name, article_name)
-                    if suc: return suc, msg
-        except: pass
-        return False, "Bing Fallback Failed"
+                
+                if "duckduckgo" in search_url:
+                    elements = driver.find_elements(By.CSS_SELECTOR, "a.result__url")[:5]
+                else:
+                    elements = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")[:5]
+                    
+                urls = [el.get_attribute("href") for el in elements if el.get_attribute("href")]
+                
+                for url in urls:
+                    if not self.running or not url: continue
+                    driver.get(url)
+                    time.sleep(4)
+                    
+                    try: page_text = driver.get_text("body")[:5000]
+                    except: page_text = driver.get_page_source()[:5000]
+                    
+                    if max(fuzz.token_set_ratio(article_name, driver.title), fuzz.token_set_ratio(article_name, page_text)) > 85:
+                        domain = urlparse(url).netloc.replace("www.", "")
+                        rule = self.rules.get(domain, self.rules.get("default", {}))
+                        suc, msg = self._selenium_execute_routes(driver, rule, format_name, article_name)
+                        if suc: return suc, msg
+            except: pass
+            
+        return False, "All Search Fallbacks Failed"
