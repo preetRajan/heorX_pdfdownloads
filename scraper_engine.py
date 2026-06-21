@@ -12,9 +12,11 @@ import shutil
 from urllib.parse import urlparse
 from seleniumbase import Driver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 from thefuzz import fuzz
 from fpdf import FPDF
 import fitz  # PyMuPDF
+import random
 
 class UniversalPDFDownloader:
     def __init__(self, download_dir, unpaywall_email=None, semantic_scholar_key=None, core_api_key=None):
@@ -180,13 +182,17 @@ class ScraperEngine:
 
     def analyze_page_with_llm(self, page_text, article_name):
         if not self.groq_client:
-            return {"is_full_paper": True, "extracted_abstract": ""}
+            return {"is_full_paper": True, "extracted_abstract": "", "figures_tables_note": ""}
             
         prompt = f"""You are an expert academic assistant. Analyze the following webpage text from an academic publisher.
 Determine if the provided text contains the full body of the research paper (e.g., Introduction, Methods, Results, Discussion) or if it only provides the Abstract/Summary (because the full paper is behind a paywall).
-Respond in pure JSON format with exactly two keys:
+If it is only an abstract, extract the ENTIRE abstract text EXACTLY as it appears on the page. Do not summarize it. 
+Additionally, identify if there are any mentions of Figures or Tables associated with the abstract on the page, and include a note about them.
+
+Respond in pure JSON format with exactly three keys:
 - "is_full_paper": boolean (true if full paper, false if only abstract)
-- "extracted_abstract": string (the text of the abstract. If it is a full paper, leave this empty, otherwise provide the abstract text).
+- "extracted_abstract": string (the complete text of the abstract, or empty if full paper)
+- "figures_tables_note": string (Any mention of Figures or Tables associated with the abstract, e.g., "Figure 1: Study design", or "No figures/tables mentioned")
 
 Text to analyze (first 8000 chars):
 {page_text[:8000]}
@@ -202,7 +208,7 @@ Text to analyze (first 8000 chars):
             result = json.loads(response_str)
             return result
         except Exception as e:
-            return {"is_full_paper": True, "extracted_abstract": ""}
+            return {"is_full_paper": True, "extracted_abstract": "", "figures_tables_note": ""}
 
     def log(self, msg_type, data):
         self.log_callback(msg_type, data)
@@ -512,8 +518,8 @@ Text to analyze (first 8000 chars):
                 
                 # Cloudflare / Captcha Check
                 if "cloudflare" in page_text_raw or "please wait while your request is being verified" in page_text_raw or "captcha" in page_text_raw:
-                    self.log("log", f"[Selenium] Captcha/Cloudflare detected for '{article_name}'. Attempting human-like interaction...")
-                    time.sleep(3)
+                    self.log("log", f"[Selenium] Captcha/Cloudflare detected for '{article_name}'. Initializing human-like interaction sequence...")
+                    time.sleep(random.uniform(2.5, 4.5))
                     
                     try:
                         # Attempt to switch to Cloudflare iframe and click the checkbox
@@ -522,18 +528,23 @@ Text to analyze (first 8000 chars):
                             src = frame.get_attribute("src")
                             if src and ("challenge" in src.lower() or "turnstile" in src.lower()):
                                 driver.switch_to.frame(frame)
-                                time.sleep(2)
+                                time.sleep(random.uniform(1.5, 3.5))
                                 box = driver.find_elements(By.CSS_SELECTOR, "input[type='checkbox'], .mark, .cb-lb, #challenge-stage")
                                 if box:
-                                    box[0].click()
-                                    self.log("log", "[Selenium] Clicked Cloudflare checkbox. Waiting for resolution...")
+                                    # Human-like mouse movement and click
+                                    action = ActionChains(driver)
+                                    action.move_to_element_with_offset(box[0], random.randint(-5, 5), random.randint(-5, 5))
+                                    action.pause(random.uniform(0.5, 1.2))
+                                    action.click()
+                                    action.perform()
+                                    self.log("log", "[Selenium] Successfully executed human-like click on Cloudflare checkbox. Waiting for resolution...")
                                 driver.switch_to.default_content()
                                 break
                     except Exception as e:
                         driver.switch_to.default_content()
                         pass
                         
-                    time.sleep(15)
+                    time.sleep(random.uniform(12.0, 16.0))
                     page_text_raw = driver.get_page_source().lower()
                     
                 if "error" in driver.get_current_url().lower() or "not found" in page_text_raw or "404" in page_text_raw:
@@ -561,14 +572,16 @@ Text to analyze (first 8000 chars):
         analysis = self.analyze_page_with_llm(page_text_raw, article_name)
         if not analysis.get("is_full_paper", True):
             abstract_text = analysis.get("extracted_abstract", "")
+            figures_note = analysis.get("figures_tables_note", "")
             if abstract_text:
                 try:
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Arial", size=12)
-                    pdf.multi_cell(0, 10, txt=f"Title: {article_name}\n\nAbstract:\n{abstract_text.encode('latin-1', 'replace').decode('latin-1')}")
+                    content = f"Title: {article_name}\n\nAbstract:\n{abstract_text}\n\nFigures/Tables Note:\n{figures_note}"
+                    pdf.multi_cell(0, 10, txt=content.encode('latin-1', 'replace').decode('latin-1'))
                     pdf.output(os.path.join(self.output_dir, f"{format_name}_abstract.pdf"))
-                    return True, "Saved LLM Extracted Abstract"
+                    return True, "Saved LLM Extracted Abstract with Figures Note"
                 except Exception as e:
                     pass
 
@@ -650,7 +663,7 @@ Text to analyze (first 8000 chars):
                 time.sleep(3)
                 
                 if "duckduckgo" in search_url:
-                    elements = driver.find_elements(By.CSS_SELECTOR, "a.result__url")[:5]
+                    elements = driver.find_elements(By.CSS_SELECTOR, "a.result__url, a.result__snippet")[:5]
                 else:
                     elements = driver.find_elements(By.CSS_SELECTOR, "li.b_algo h2 a")[:5]
                     
