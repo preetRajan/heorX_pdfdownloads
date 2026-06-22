@@ -149,7 +149,7 @@ class UniversalPDFDownloader:
 
 class ScraperEngine:
     def __init__(self, excel_path, log_callback, progress_callback, stats_callback, flow_callback, max_workers=3, 
-                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None, zenrows_key=None):
+                 groq_api_key=None, unpaywall_email=None, ss_key=None, core_api_key=None, scrape_do_key=None):
         self.excel_path = excel_path
         self.log_callback = log_callback
         self.progress_callback = progress_callback
@@ -162,7 +162,8 @@ class ScraperEngine:
         self.rules = self.load_rules()
         self.driver_pool = queue.Queue()
         self.report_data = []
-        self.zenrows_key = zenrows_key
+        self.scrape_do_key = scrape_do_key
+        self.failed_pdfs = []
         
         self.groq_api_key = groq_api_key
         self.groq_client = None
@@ -280,7 +281,7 @@ Text to analyze (first 8000 chars):
                 ("Semantic Scholar", self._tier_ss),
                 ("CORE API", self._tier_core),
                 ("Sci-Hub", self._tier_scihub),
-                ("ZenRows Proxy", self._tier_zenrows),
+                ("Scrape.do Proxy", self._tier_scrape_do),
                 ("Selenium & LLM", self._tier_selenium)
             ]
 
@@ -348,6 +349,14 @@ Text to analyze (first 8000 chars):
                     "retrieved": retrieved_this_tier,
                     "remaining": len(remaining_df),
                     "status": "Completed"
+                })
+
+            # Populate Failed PDFs for Manual Intervention
+            for _, row in remaining_df.iterrows():
+                self.failed_pdfs.append({
+                    "Article Name": str(row['Article Name']).strip(),
+                    "DOI": str(row['DOI']).strip(),
+                    "Format Name": str(row['Format Name']).strip()
                 })
 
             # Generate Report
@@ -427,9 +436,9 @@ Text to analyze (first 8000 chars):
             except: pass
         return False, "Not found on Sci-Hub mirrors"
 
-    def _tier_zenrows(self, row, dups):
-        if not self.zenrows_key:
-            return False, "ZenRows API Key not configured"
+    def _tier_scrape_do(self, row, dups):
+        if not self.scrape_do_key:
+            return False, "Scrape.do API Key not configured"
             
         doi = str(row['DOI']).strip()
         format_name = str(row['Format Name']).strip()
@@ -437,19 +446,20 @@ Text to analyze (first 8000 chars):
             doi = f"https://doi.org/{doi}"
             
         if not doi or doi == 'nan' or not doi.startswith('http'):
-            return False, "Invalid DOI for ZenRows"
+            return False, "Invalid DOI for Scrape.do"
             
         try:
             # 1. Fetch raw HTML to bypass Cloudflare
             params = {
-                'url': doi,
-                'apikey': self.zenrows_key,
-                'mode': 'auto',
+                "token": self.scrape_do_key,
+                "url": doi,
+                "render": "true",
+                "super": "true"
             }
-            res = requests.get("https://api.zenrows.com/v1/", params=params, timeout=60)
+            res = requests.get("http://api.scrape.do/", params=params, timeout=45)
             
             if res.status_code != 200:
-                return False, f"ZenRows Blocked or Failed: {res.status_code}"
+                return False, f"Scrape.do Blocked or Failed: {res.status_code}"
                 
             html = res.text
             
@@ -472,13 +482,13 @@ Text to analyze (first 8000 chars):
                 domain = "{0.scheme}://{0.netloc}".format(urlparse(res.url))
                 pdf_url = domain + pdf_url
                 
-            # 3. Stream the actual PDF through ZenRows
+            # 3. Stream the actual PDF through Scrape.do
             pdf_params = {
-                'url': pdf_url,
-                'apikey': self.zenrows_key,
-                'mode': 'auto',
+                "token": self.scrape_do_key,
+                "url": pdf_url,
+                "super": "true"
             }
-            pdf_res = requests.get("https://api.zenrows.com/v1/", params=pdf_params, stream=True, timeout=90)
+            pdf_res = requests.get("http://api.scrape.do/", params=pdf_params, stream=True, timeout=60)
             
             content_type = pdf_res.headers.get('Content-Type', '').lower()
             if pdf_res.status_code == 200 and ('pdf' in content_type or 'octet-stream' in content_type):
@@ -487,12 +497,12 @@ Text to analyze (first 8000 chars):
                 with open(filepath, 'wb') as f:
                     for chunk in pdf_res.iter_content(chunk_size=8192):
                         if chunk: f.write(chunk)
-                return True, "Saved via ZenRows Auto Bypass"
+                return True, "Saved via Scrape.do Premium Proxy"
                 
-            return False, "ZenRows found PDF link but stream failed"
+            return False, "Scrape.do found PDF link but stream failed"
             
         except Exception as e:
-            return False, f"ZenRows Error: {str(e)}"
+            return False, f"Scrape.do Error: {str(e)}"
 
     def _tier_selenium(self, row, duplicate_dois):
         driver = self.driver_pool.get()
