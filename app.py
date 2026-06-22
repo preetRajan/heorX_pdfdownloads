@@ -53,7 +53,7 @@ def flow_callback(flow_data):
         state.flow_status.append(flow_data)
 
 def render_truck_visualization():
-    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "ZenRows Proxy", "Selenium & LLM"]
+    tiers = ["Unpaywall", "PubMed Central", "arXiv", "DOAJ", "Semantic Scholar", "CORE API", "Sci-Hub", "Scrape.do Proxy", "Selenium & LLM"]
     total_loaded = sum([f.get('retrieved', 0) for f in state.flow_status])
     
     html = "<div style='display:flex; justify-content:space-between; align-items:flex-end; position:relative; padding-top:70px; padding-bottom: 30px; font-family:sans-serif; overflow-x:auto;'>"
@@ -144,7 +144,7 @@ with col1:
     
     with st.expander("API Keys & Settings", expanded=True):
         groq_key = st.text_input("Groq API Key (Required)", type="password", help="For LLM abstract detection")
-        zenrows_key = st.text_input("ZenRows API Key (Anti-Bot Bypass)", type="password", help="Will route through ZenRows to bypass Cloudflare/Akamai")
+        scrape_do_key = st.text_input("Scrape.do API Key (Anti-Bot Bypass)", type="password", help="Will route through Scrape.do to bypass Cloudflare/Akamai")
         core_key = st.text_input("CORE API Key", value="rdbipaBHZm02PjTOA8h6evxMyYsf47FD", type="password")
         ss_key = st.text_input("Semantic Scholar API Key", value="8D7qtvI8UC1xX5gQJnQj87NPBiPmzycV1NcIJ76w", type="password")
         unpaywall_email = st.text_input("Unpaywall Email", value="rajanjatt110@gmail.com")
@@ -187,54 +187,58 @@ with col1:
                     progress_callback=progress_callback, stats_callback=stats_callback,
                     flow_callback=flow_callback, max_workers=max_workers,
                     groq_api_key=groq_key, unpaywall_email=unpaywall_email,
-                    ss_key=ss_key, core_api_key=core_key, zenrows_key=zenrows_key
+                    ss_key=ss_key, core_api_key=core_key, scrape_do_key=scrape_do_key
                 )
                 state.engine = engine
                 threading.Thread(target=engine.run, daemon=True).start()
                 st.rerun()
                 
     with tab2:
-        st.markdown("**Single Article Extraction**")
-        with st.form("manual_entry_form"):
-            doi_input = st.text_input("DOI (Required)")
-            article_name_input = st.text_input("Article Name (Required)")
-            format_name_input = st.text_input("Format Name (Output filename without .pdf) (Required)")
-            author_input = st.text_input("Author Name (Optional)")
-            pmcid_input = st.text_input("PMCID (Optional)")
-            arxiv_input = st.text_input("arXiv ID (Optional)")
-            bing_link_input = st.text_input("Bing Fallback Link (Optional)")
+        st.markdown("**Manual Entry (Multiple Articles)**")
+        st.markdown("Add as many rows as you need below, then click Extract.")
+        
+        # Initialize empty dataframe with correct columns
+        df_columns = ["DOI", "Article Name", "Format Name", "Author Name", "PMCID", "arXiv ID", "Bing Link"]
+        if 'manual_df' not in st.session_state:
+            st.session_state.manual_df = pd.DataFrame(columns=df_columns)
+            # Add one empty row by default
+            st.session_state.manual_df.loc[0] = ["", "", "", "", "", "", ""]
             
-            manual_submit = st.form_submit_button("Extract Article", use_container_width=True)
+        edited_df = st.data_editor(st.session_state.manual_df, num_rows="dynamic", use_container_width=True, hide_index=True)
+        
+        manual_submit = st.button("Extract Articles", use_container_width=True, type="primary")
+        
+        if manual_submit:
+            # Filter out completely empty rows
+            valid_df = edited_df.dropna(how='all')
+            # Require at least DOI, Article Name, Format Name
+            valid_df = valid_df[valid_df['DOI'].astype(bool) & valid_df['Article Name'].astype(bool) & valid_df['Format Name'].astype(bool)]
             
-            if manual_submit:
-                if not doi_input or not article_name_input or not format_name_input:
-                    st.error("Please fill in DOI, Article Name, and Format Name.")
-                elif not groq_key:
-                    st.error("Groq API Key is required.")
-                else:
-                    tmp_dir = tempfile.gettempdir()
-                    tmp_path = os.path.join(tmp_dir, "manual_entry.xlsx")
-                    pd.DataFrame([{
-                        "DOI": doi_input, "Article Name": article_name_input, "Format Name": format_name_input,
-                        "Author Name": author_input, "PMCID": pmcid_input, "arXiv ID": arxiv_input, "Bing Link": bing_link_input
-                    }]).to_excel(tmp_path, index=False)
-                    
-                    state.is_scraping = True
-                    state.logs = []
-                    state.progress = 0.0
-                    state.stats = {k: 0 for k in state.stats}
-                    state.flow_status = []
-                    
-                    engine = ScraperEngine(
-                        excel_path=tmp_path, log_callback=log_callback, 
-                        progress_callback=progress_callback, stats_callback=stats_callback,
-                        flow_callback=flow_callback, max_workers=max_workers,
-                        groq_api_key=groq_key, unpaywall_email=unpaywall_email,
-                        ss_key=ss_key, core_api_key=core_key, zenrows_key=zenrows_key
-                    )
-                    state.engine = engine
-                    threading.Thread(target=engine.run, daemon=True).start()
-                    st.rerun()
+            if valid_df.empty:
+                st.error("Please enter at least one valid article with a DOI, Article Name, and Format Name.")
+            elif not groq_key:
+                st.error("Groq API Key is required.")
+            else:
+                tmp_dir = tempfile.gettempdir()
+                tmp_path = os.path.join(tmp_dir, "manual_entry.xlsx")
+                valid_df.to_excel(tmp_path, index=False)
+                
+                state.is_scraping = True
+                state.logs = []
+                state.progress = 0.0
+                state.stats = {k: 0 for k in state.stats}
+                state.flow_status = []
+                
+                engine = ScraperEngine(
+                    excel_path=tmp_path, log_callback=log_callback, 
+                    progress_callback=progress_callback, stats_callback=stats_callback,
+                    flow_callback=flow_callback, max_workers=max_workers,
+                    groq_api_key=groq_key, unpaywall_email=unpaywall_email,
+                    ss_key=ss_key, core_api_key=core_key, scrape_do_key=scrape_do_key
+                )
+                state.engine = engine
+                threading.Thread(target=engine.run, daemon=True).start()
+                st.rerun()
 
 with col2:
     st.subheader("Real-Time Dashboard")
@@ -259,6 +263,40 @@ with col2:
             if state.engine:
                 state.engine.stop()
                 st.warning("Stopping sequence initiated...")
+
+    # Manual Intervention UI
+    if not state.is_scraping and state.engine and hasattr(state.engine, 'failed_pdfs') and state.engine.failed_pdfs:
+        st.markdown("---")
+        st.error("⚠️ Manual Intervention Required")
+        st.markdown("The following papers failed automated extraction due to Captchas. Please open the link, manually download the PDF, and upload it here. It will be automatically bundled into your ZIP file!")
+        
+        remaining_failures = []
+        for fp in state.engine.failed_pdfs:
+            article = fp['Article Name']
+            doi = fp['DOI']
+            fmt_name = fp['Format Name']
+            
+            # Create a unique key for the uploader
+            up_key = f"upload_{fmt_name}"
+            
+            with st.container():
+                st.markdown(f"**{article}**")
+                link_url = f"https://doi.org/{doi}" if doi.startswith('10.') else doi
+                st.markdown(f"[Open Paper in New Window]({link_url})")
+                
+                uploaded_pdf = st.file_uploader(f"Upload {fmt_name}.pdf", type="pdf", key=up_key)
+                
+                if uploaded_pdf is not None:
+                    # Save to engine output dir
+                    save_path = os.path.join(state.engine.output_dir, f"{state.engine.universal_downloader._clean_filename(fmt_name)}.pdf")
+                    with open(save_path, "wb") as f:
+                        f.write(uploaded_pdf.getbuffer())
+                    st.success(f"Successfully saved {fmt_name}.pdf to bundle!")
+                else:
+                    remaining_failures.append(fp)
+                    
+        # Update the list to remove successfully manually uploaded ones
+        state.engine.failed_pdfs = remaining_failures
 
     log_container = st.container(height=350)
     for log in reversed(state.logs[-200:]):
