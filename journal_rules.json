@@ -48,5 +48,115 @@
         "pdf_meta_tag": "citation_pdf_url",
         "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
         "timeout": 20
+    },
+    "academic.oup.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "journals.sagepub.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@data-item-name, 'download-pdf')]",
+        "timeout": 20
+    },
+    "mdpi.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'UD_Listings_ArticlePDF')]",
+        "timeout": 20
+    },
+    "frontiersin.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "plos.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@id='downloadPdf']",
+        "timeout": 20
+    },
+    "ahajournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ascopubs.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "timeout": 20
+    },
+    "cell.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "pnas.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'item-pdf-link')]",
+        "timeout": 20
+    },
+    "science.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'core-pdf-link')]",
+        "timeout": 20
+    },
+    "ajmc.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "jmcp.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-button')]",
+        "timeout": 20
+    },
+    "medrxiv.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "biorxiv.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "ispor.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "valueinhealthjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn')]",
+        "timeout": 20
+    },
+    "ebm.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "healtheconomicsreview.biomedcentral.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@data-test, 'download-pdf')]",
+        "timeout": 20
+    },
+    "pharmacoeconomics.springer.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link')]",
+        "timeout": 20
+    },
+    "healtheconomics.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download')]",
+        "timeout": 20
+    },
+    "cambridge.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "karger.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@title, 'PDF')]",
+        "timeout": 20
     }
 }
