@@ -6,22 +6,342 @@
     },
     "sciencedirect.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-download-btn')]",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
         "timeout": 20
     },
-    "nature.com": {
+    "cell.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@data-track-action, 'download pdf')]",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "thelancet.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "ajodo.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "gastrojournal.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jacc.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jaad.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jpsmjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "mayoclinicproceedings.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "amjmed.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "annemergmed.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "apmrjournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "arthroplastyjournal.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "biologicalpsychiatryjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "chestnet.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "cghjournal.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "epires-journal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "fertstert.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jaci-inpractice.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jacionline.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jamda.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jcin.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jhltonline.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "journal-of-hepatology.eu": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jpeds.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "jssjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "kidney-international.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "metabolismjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "nmd-journal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "prd-journal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "resuscitationjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "schres-journal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "sleep-journal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "surgjournal.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
+        "timeout": 20
+    },
+    "thespinejournalonline.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'pdf-download-btn') or contains(@class, 'article-tools__pdf')]",
         "timeout": 20
     },
     "link.springer.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'c-pdf-download__link')]",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "nature.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "biomedcentral.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "springeropen.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "palgrave.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "adis.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "nature.com/articles": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "cureus.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
+        "timeout": 20
+    },
+    "rdcu.be": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'c-pdf-download__link') or contains(@data-track-action, 'download pdf')]",
         "timeout": 20
     },
     "onlinelibrary.wiley.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download')]",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "healtheconomics.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "obgyn.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "stemcellsjournals.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "agupubs.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "aacrjournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "acsjournals.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "alzjournals.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "anthrosource.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "bpspubs.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "bjsm.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "cambridge.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "cochranelibrary.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "efsa.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "faseb.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "febs.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "lse.ac.uk": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "mja.com.au": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "physoc.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "resjournals.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "rnajournal.cshlp.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "rss.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "shmpublications.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "vetsmed.onlinelibrary.wiley.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download') or contains(@class, 'pdf-link')]",
         "timeout": 20
     },
     "tandfonline.com": {
@@ -29,19 +349,34 @@
         "button_xpath": "//a[contains(@class, 'show-pdf')]",
         "timeout": 20
     },
-    "jamanetwork.com": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+    "dovepress.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
         "timeout": 20
     },
-    "nejm.org": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[@data-target='pdf']",
+    "cogentoa.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
         "timeout": 20
     },
-    "thelancet.com": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@title, 'Download PDF')]",
+    "routledge.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "timeout": 20
+    },
+    "crcpress.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "timeout": 20
+    },
+    "expert-reviews.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "timeout": 20
+    },
+    "informahealthcare.com": {
+        "pdf_meta_tag": "dc.Identifier.URI",
+        "button_xpath": "//a[contains(@class, 'show-pdf')]",
         "timeout": 20
     },
     "bmj.com": {
@@ -49,14 +384,299 @@
         "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
         "timeout": 20
     },
-    "academic.oup.com": {
+    "ebm.bmj.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-pdfLink')]",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
         "timeout": 20
     },
-    "journals.sagepub.com": {
+    "gut.bmj.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@data-item-name, 'download-pdf')]",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "heart.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "jnnp.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "thorax.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "ard.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "annrheumdis.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "adc.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "bjo.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "bmjopen.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "casereports.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "emj.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "jech.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "jmg.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "jcp.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "mh.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "oem.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "pmj.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "qir.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "sti.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "tc.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "vetrecord.bmj.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "timeout": 20
+    },
+    "jamanetwork.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "academic.oup.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "pubs.asha.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "psychiatryonline.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "aappublications.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "aap.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "ajhp.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "ajnr.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "ajroentgen.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "bloodjournal.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "diabetesjournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "endocrine.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "ersjournals.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "fasebj.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "haematologica.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "jbc.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "jimmunol.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "jneurosci.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "neurology.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "pediatrics.aappublications.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "rupress.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(@class, 'al-link pdf') or contains(@class, 'article-pdfLink')]",
+        "timeout": 20
+    },
+    "nejm.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "pubs.acs.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "arc.aiaa.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ascelibrary.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "meridian.allenpress.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ajp.psychiatryonline.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "annals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ascopubs.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "jco.ascopubs.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "bloodadvances.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "jop.ascopubs.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ajph.aphapublications.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "healio.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "jaha.ahajournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "ahajournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
+        "timeout": 20
+    },
+    "stroke.ahajournals.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@data-target='pdf' or contains(@class, 'show-pdf') or contains(@class, 'pdf-link')]",
         "timeout": 20
     },
     "mdpi.com": {
@@ -64,99 +684,129 @@
         "button_xpath": "//a[contains(@class, 'UD_Listings_ArticlePDF')]",
         "timeout": 20
     },
-    "frontiersin.org": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(text(), 'Download PDF')]",
-        "timeout": 20
-    },
     "plos.org": {
         "pdf_meta_tag": "citation_pdf_url",
         "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "ahajournals.org": {
+    "journals.plos.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "ascopubs.org": {
+    "plosone.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'show-pdf')]",
+        "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "cell.com": {
+    "plosbiology.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-tools__pdf')]",
+        "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "pnas.org": {
+    "plosmedicine.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'item-pdf-link')]",
+        "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "science.org": {
+    "ploscompbiol.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'core-pdf-link')]",
+        "button_xpath": "//a[@id='downloadPdf']",
         "timeout": 20
     },
-    "ajmc.com": {
+    "plosgenetics.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@id='downloadPdf']",
+        "timeout": 20
+    },
+    "plospathogens.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@id='downloadPdf']",
+        "timeout": 20
+    },
+    "plosntds.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[@id='downloadPdf']",
+        "timeout": 20
+    },
+    "frontiersin.org": {
         "pdf_meta_tag": "citation_pdf_url",
         "button_xpath": "//a[contains(text(), 'Download PDF')]",
         "timeout": 20
     },
-    "jmcp.org": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-button')]",
-        "timeout": 20
-    },
     "medrxiv.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
     "biorxiv.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "arxiv.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "preprints.org": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "researchsquare.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "ssrn.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@class, 'article-pdf-download') or contains(text(), 'Download PDF')]",
+        "timeout": 20
+    },
+    "journals.sagepub.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@data-item-name, 'download-pdf')]",
+        "timeout": 20
+    },
+    "sagepub.com": {
+        "pdf_meta_tag": "citation_pdf_url",
+        "button_xpath": "//a[contains(@data-item-name, 'download-pdf')]",
         "timeout": 20
     },
     "ispor.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
     "valueinhealthjournal.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-download-btn')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
-    "ebm.bmj.com": {
+    "jmcp.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'article-pdf-download')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
-    "healtheconomicsreview.biomedcentral.com": {
+    "ajmc.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@data-test, 'download-pdf')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
-    "pharmacoeconomics.springer.com": {
+    "pnas.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'c-pdf-download__link')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
-    "healtheconomics.onlinelibrary.wiley.com": {
+    "science.org": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'coolBar__ctrl pdf-download')]",
-        "timeout": 20
-    },
-    "cambridge.org": {
-        "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@class, 'pdf-link')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     },
     "karger.com": {
         "pdf_meta_tag": "citation_pdf_url",
-        "button_xpath": "//a[contains(@title, 'PDF')]",
+        "button_xpath": "//a[contains(@class, 'pdf-link') or contains(@class, 'pdf-download-btn') or contains(@class, 'core-pdf-link') or contains(@title, 'PDF') or contains(text(), 'Download PDF')]",
         "timeout": 20
     }
 }
