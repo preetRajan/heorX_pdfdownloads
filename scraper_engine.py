@@ -163,7 +163,6 @@ class ScraperEngine:
         self.driver_pool = queue.Queue()
         self.report_data = []
         self.scrape_do_key = scrape_do_key
-        self.failed_pdfs = []
         
         self.groq_api_key = groq_api_key
         self.groq_client = None
@@ -349,14 +348,6 @@ Text to analyze (first 8000 chars):
                     "retrieved": retrieved_this_tier,
                     "remaining": len(remaining_df),
                     "status": "Completed"
-                })
-
-            # Populate Failed PDFs for Manual Intervention
-            for _, row in remaining_df.iterrows():
-                self.failed_pdfs.append({
-                    "Article Name": str(row['Article Name']).strip(),
-                    "DOI": str(row['DOI']).strip(),
-                    "Format Name": str(row['Format Name']).strip()
                 })
 
             # Generate Report
