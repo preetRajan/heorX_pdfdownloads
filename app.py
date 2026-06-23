@@ -264,40 +264,6 @@ with col2:
                 state.engine.stop()
                 st.warning("Stopping sequence initiated...")
 
-    # Manual Intervention UI
-    if not state.is_scraping and state.engine and hasattr(state.engine, 'failed_pdfs') and state.engine.failed_pdfs:
-        st.markdown("---")
-        st.error("⚠️ Manual Intervention Required")
-        st.markdown("The following papers failed automated extraction due to Captchas. Please open the link, manually download the PDF, and upload it here. It will be automatically bundled into your ZIP file!")
-        
-        remaining_failures = []
-        for fp in state.engine.failed_pdfs:
-            article = fp['Article Name']
-            doi = fp['DOI']
-            fmt_name = fp['Format Name']
-            
-            # Create a unique key for the uploader
-            up_key = f"upload_{fmt_name}"
-            
-            with st.container():
-                st.markdown(f"**{article}**")
-                link_url = f"https://doi.org/{doi}" if doi.startswith('10.') else doi
-                st.markdown(f"[Open Paper in New Window]({link_url})")
-                
-                uploaded_pdf = st.file_uploader(f"Upload {fmt_name}.pdf", type="pdf", key=up_key)
-                
-                if uploaded_pdf is not None:
-                    # Save to engine output dir
-                    save_path = os.path.join(state.engine.output_dir, f"{state.engine.universal_downloader._clean_filename(fmt_name)}.pdf")
-                    with open(save_path, "wb") as f:
-                        f.write(uploaded_pdf.getbuffer())
-                    st.success(f"Successfully saved {fmt_name}.pdf to bundle!")
-                else:
-                    remaining_failures.append(fp)
-                    
-        # Update the list to remove successfully manually uploaded ones
-        state.engine.failed_pdfs = remaining_failures
-
     log_container = st.container(height=350)
     for log in reversed(state.logs[-200:]):
         log_container.text(log)
